@@ -2,6 +2,6 @@ package com.hikmetsuicmez.eventverse.enums;
 
 public enum ParticipantStatus {
     PENDING,
-    CONFIRMED,
+    APPROVED,
     REJECTED
 } 

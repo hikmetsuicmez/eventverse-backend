@@ -1,14 +1,11 @@
 package com.hikmetsuicmez.eventverse.dto.request;
 
-import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
-import java.util.UUID;
 
 @Data
+@Builder
 public class ParticipantRequest {
-    @NotNull(message = "Kullanıcı ID boş olamaz")
-    private UUID userId;
-
-    @NotNull(message = "Etkinlik ID boş olamaz")
-    private UUID eventId;
+    // Şu an için boş olabilir, ileride katılımcının ekstra bilgileri eklenebilir
+    // Örneğin: String note; // Katılımcının etkinlik için notu
 } 

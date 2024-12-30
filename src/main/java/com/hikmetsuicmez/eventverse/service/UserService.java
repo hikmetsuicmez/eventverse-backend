@@ -6,6 +6,8 @@ import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 
+import java.util.UUID;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +17,18 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    public User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    public UUID getCurrentUserId() {
+        return getCurrentUser().getId();
+    }
+
     public UserResponse loggedInUser() {
         User currentUser = getCurrentUser();
-        
         return UserResponse.builder()
                 .id(currentUser.getId())
                 .firstName(currentUser.getFirstName())
@@ -27,11 +38,5 @@ public class UserService {
                 .address(currentUser.getAddress())
                 .profilePicture(currentUser.getProfilePicture())
                 .build();
-    }
-
-    public User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 }

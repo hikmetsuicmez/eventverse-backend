@@ -18,8 +18,10 @@ public class RegisterRequest {
 
     @NotBlank(message = "Şifre boş olamaz")
     @Size(min = 6, max = 20, message = "Şifre 6-20 karakter arasında olmalıdır")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).*$", 
-             message = "Şifre en az bir rakam, bir küçük harf, bir büyük harf ve bir özel karakter içermelidir")
+    @Pattern(
+        regexp = "^(?=.*[0-9])(?=.*[a-zçğıöşü])(?=.*[A-ZÇĞİÖŞÜ])(?=.*[@#$%^&+=.*])(?=\\S+$).{8,}$",
+        message = "Şifre en az bir rakam, bir küçük harf, bir büyük harf ve bir özel karakter içermelidir"
+    )
     private String password;
 
     @NotBlank(message = "İsim boş olamaz")

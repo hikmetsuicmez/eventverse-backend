@@ -15,4 +15,8 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     Optional<Participant> findByUserAndEvent(User user, Event event);
     boolean existsByUserAndEvent(User user, Event event);
     long countByEvent(Event event);
+    boolean existsByEventIdAndUserId(UUID eventId, UUID userId);
+    long countByEventId(UUID eventId);
+    List<Participant> findByEventId(UUID id);
+    Optional<Participant> findByEventIdAndId(UUID eventId, UUID participantId);
 } 

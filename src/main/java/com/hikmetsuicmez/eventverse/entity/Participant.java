@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -29,5 +30,8 @@ public class Participant {
     private Event event;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private ParticipantStatus status;
+
+    private LocalDateTime registrationDate;
 }

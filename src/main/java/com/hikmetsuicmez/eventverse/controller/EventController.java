@@ -6,7 +6,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hikmetsuicmez.eventverse.dto.request.EventRequest;
 import com.hikmetsuicmez.eventverse.dto.response.ApiResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
+import com.hikmetsuicmez.eventverse.dto.response.ParticipantResponse;
+import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 import com.hikmetsuicmez.eventverse.service.EventService;
+import com.hikmetsuicmez.eventverse.service.ParticipantService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 @RestController
 @RequestMapping("/api/v1/events")
@@ -28,6 +33,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class EventController {
 
     private final EventService eventService;
+    private final ParticipantService participantService;
 
     @PostMapping
     public ApiResponse<EventResponse> createEvent(@RequestBody @Valid EventRequest request) {
@@ -44,9 +50,27 @@ public class EventController {
             "Events retrieved successfully");
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse<EventResponse> getEvent(@PathVariable UUID id) {
-        return ApiResponse.success(eventService.retrieveEvent(id), "Event retrieved successfully");
+    @GetMapping("/{eventId}")
+    public ApiResponse<EventResponse> getEvent(@PathVariable UUID eventId) {
+        return ApiResponse.success(eventService.retrieveEvent(eventId), "Event retrieved successfully");
+    }
+
+    @PostMapping("/{eventId}/participants")
+    public ApiResponse<ParticipantResponse> addParticipant(@PathVariable UUID eventId) {
+        return ApiResponse.success(participantService.addParticipant(eventId), "Participant added successfully");
+    }
+
+    @GetMapping("/{eventId}/participants")
+    public ApiResponse<List<ParticipantResponse>> getParticipants(@PathVariable UUID eventId) {
+        return ApiResponse.success(participantService.getParticipants(eventId), "Participants retrieved successfully");
+    }
+
+    @PatchMapping("/{eventId}/participants/{participantId}/status")
+    public ResponseEntity<ParticipantResponse> updateParticipantStatus(
+            @PathVariable UUID eventId,
+            @PathVariable UUID participantId,
+            @RequestParam ParticipantStatus status) {
+        return ResponseEntity.ok(participantService.updateParticipantStatus(eventId, participantId, status));
     }
     
 }
