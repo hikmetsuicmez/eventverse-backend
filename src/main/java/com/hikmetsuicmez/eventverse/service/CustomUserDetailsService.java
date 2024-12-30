@@ -1,6 +1,7 @@
 package com.hikmetsuicmez.eventverse.service;
 
 import com.hikmetsuicmez.eventverse.entity.User;
+import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
 import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,10 +18,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return org.springframework.security.core.userdetails.User.builder()
-            .username(user.getUsername())
+            .username(user.getEmail())
             .password(user.getPassword())
             .build();
     }

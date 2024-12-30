@@ -17,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import com.hikmetsuicmez.eventverse.filter.JwtAuthenticationFilter;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +32,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

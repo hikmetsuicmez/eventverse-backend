@@ -4,6 +4,8 @@ import com.hikmetsuicmez.eventverse.dto.request.AuthenticationRequest;
 import com.hikmetsuicmez.eventverse.dto.request.RegisterRequest;
 import com.hikmetsuicmez.eventverse.dto.response.AuthenticationResponse;
 import com.hikmetsuicmez.eventverse.service.AuthenticationService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,14 +19,14 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody RegisterRequest request
+            @RequestBody @Valid RegisterRequest request
     ) {
         return ResponseEntity.ok(authenticationService.register(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(
-            @RequestBody AuthenticationRequest request
+            @RequestBody @Valid AuthenticationRequest request
     ) {
         return ResponseEntity.ok(authenticationService.authenticate(request));
     }
