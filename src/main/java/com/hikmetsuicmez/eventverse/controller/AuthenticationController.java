@@ -1,0 +1,42 @@
+package com.hikmetsuicmez.eventverse.controller;
+
+import com.hikmetsuicmez.eventverse.dto.AuthenticationRequest;
+import com.hikmetsuicmez.eventverse.dto.AuthenticationResponse;
+import com.hikmetsuicmez.eventverse.dto.RegisterRequest;
+import com.hikmetsuicmez.eventverse.service.AuthenticationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class AuthenticationController {
+
+    private final AuthenticationService authenticationService;
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthenticationResponse> register(
+            @RequestBody RegisterRequest request
+    ) {
+        return ResponseEntity.ok(authenticationService.register(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthenticationResponse> authenticate(
+            @RequestBody AuthenticationRequest request
+    ) {
+        return ResponseEntity.ok(authenticationService.authenticate(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refresh(
+            @RequestHeader("Authorization") String refreshToken
+    ) {
+        if (refreshToken != null && refreshToken.startsWith("Bearer ")) {
+            refreshToken = refreshToken.substring(7);
+            return ResponseEntity.ok(authenticationService.refreshToken(refreshToken));
+        }
+        throw new RuntimeException("Invalid refresh token header");
+    }
+} 
