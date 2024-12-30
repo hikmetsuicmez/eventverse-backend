@@ -4,6 +4,7 @@ import com.hikmetsuicmez.eventverse.dto.AuthenticationRequest;
 import com.hikmetsuicmez.eventverse.dto.AuthenticationResponse;
 import com.hikmetsuicmez.eventverse.dto.RegisterRequest;
 import com.hikmetsuicmez.eventverse.entity.User;
+import com.hikmetsuicmez.eventverse.enums.UserRole;
 import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,9 +23,9 @@ public class AuthenticationService {
 
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
-                .username(request.getUsername())
+                .email(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role("USER")
+                .role(UserRole.PARTICIPANT)
                 .build();
         userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
