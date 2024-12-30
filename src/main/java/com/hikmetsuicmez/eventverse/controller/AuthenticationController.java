@@ -1,8 +1,8 @@
 package com.hikmetsuicmez.eventverse.controller;
 
-import com.hikmetsuicmez.eventverse.dto.AuthenticationRequest;
-import com.hikmetsuicmez.eventverse.dto.AuthenticationResponse;
-import com.hikmetsuicmez.eventverse.dto.RegisterRequest;
+import com.hikmetsuicmez.eventverse.dto.request.AuthenticationRequest;
+import com.hikmetsuicmez.eventverse.dto.request.RegisterRequest;
+import com.hikmetsuicmez.eventverse.dto.response.AuthenticationResponse;
 import com.hikmetsuicmez.eventverse.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

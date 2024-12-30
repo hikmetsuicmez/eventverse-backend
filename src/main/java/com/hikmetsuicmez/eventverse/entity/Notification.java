@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.hikmetsuicmez.eventverse.enums.NotificationStatus;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -32,4 +33,6 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
+
+    private LocalDateTime timestamp;
 }

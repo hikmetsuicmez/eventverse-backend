@@ -1,1 +1,0 @@
-INSERT INTO user (username, password, role) VALUES ('user1', '$2a$10$DowJonesIndex', 'USER'); 

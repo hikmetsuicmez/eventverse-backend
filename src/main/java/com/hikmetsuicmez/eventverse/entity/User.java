@@ -5,23 +5,19 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import com.hikmetsuicmez.eventverse.enums.UserRole;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users")
 public class User implements UserDetails {
 
@@ -29,27 +25,28 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String name;
+    private String firstName;
+    private String lastName;
     
     @Column(unique = true)
     private String email;
     
     private String password;
+    private String phoneNumber;
+    private String address;
+    private String profilePicture;
 
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
-    
     @OneToMany(mappedBy = "organizer", cascade = CascadeType.ALL)
     private List<Event> createdEvents;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return List.of(new SimpleGrantedAuthority("USER"));
     }
 
     @Override
     public String getUsername() {
-        return email; // email'i username olarak kullanıyoruz
+        return email;
     }
 
     @Override

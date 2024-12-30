@@ -1,13 +1,17 @@
 package com.hikmetsuicmez.eventverse.dto.response;
 
+import lombok.Builder;
 import lombok.Data;
 import java.util.UUID;
-import com.hikmetsuicmez.eventverse.enums.UserRole;
 
 @Data
+@Builder
 public class UserResponse {
     private UUID id;
-    private String name;
+    private String firstName;
+    private String lastName;
     private String email;
-    private UserRole role;
+    private String phoneNumber;
+    private String address;
+    private String profilePicture;
 } 

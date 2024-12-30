@@ -1,10 +1,9 @@
 package com.hikmetsuicmez.eventverse.service;
 
-import com.hikmetsuicmez.eventverse.dto.AuthenticationRequest;
-import com.hikmetsuicmez.eventverse.dto.AuthenticationResponse;
-import com.hikmetsuicmez.eventverse.dto.RegisterRequest;
+import com.hikmetsuicmez.eventverse.dto.request.AuthenticationRequest;
+import com.hikmetsuicmez.eventverse.dto.request.RegisterRequest;
+import com.hikmetsuicmez.eventverse.dto.response.AuthenticationResponse;
 import com.hikmetsuicmez.eventverse.entity.User;
-import com.hikmetsuicmez.eventverse.enums.UserRole;
 import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,9 +22,13 @@ public class AuthenticationService {
 
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
-                .email(request.getUsername())
+                .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.PARTICIPANT)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .phoneNumber(request.getPhoneNumber())
+                .address(request.getAddress())
+                .profilePicture(request.getProfilePicture())
                 .build();
         userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
@@ -39,11 +42,11 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        request.getEmail(),
                         request.getPassword()
                 )
         );
-        var user = userRepository.findByUsername(request.getUsername())
+        var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow();
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -56,7 +59,7 @@ public class AuthenticationService {
     public AuthenticationResponse refreshToken(String refreshToken) {
         final String username = jwtService.extractUsername(refreshToken);
         if (username != null) {
-            var user = userRepository.findByUsername(username)
+            var user = userRepository.findByEmail(username)
                     .orElseThrow();
             if (jwtService.isTokenValid(refreshToken, user)) {
                 var accessToken = jwtService.generateToken(user);
