@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -41,4 +43,10 @@ public class EventController {
         return ApiResponse.success(eventService.retrieveEvents(category, location, date), 
             "Events retrieved successfully");
     }
+
+    @GetMapping("/{id}")
+    public ApiResponse<EventResponse> getEvent(@PathVariable UUID id) {
+        return ApiResponse.success(eventService.retrieveEvent(id), "Event retrieved successfully");
+    }
+    
 }

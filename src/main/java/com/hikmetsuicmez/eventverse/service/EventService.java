@@ -2,6 +2,7 @@ package com.hikmetsuicmez.eventverse.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,8 @@ import com.hikmetsuicmez.eventverse.entity.Event;
 import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.entity.User;
+import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -63,6 +66,13 @@ public class EventService {
                 .stream()
                 .map(eventMapper::toResponse)
                 .toList();
+    }
+
+    public EventResponse retrieveEvent(UUID id) {
+        Event event = eventRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        return eventMapper.toResponse(event);
     }
 
 }
