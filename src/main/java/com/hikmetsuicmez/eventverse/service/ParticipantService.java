@@ -15,6 +15,7 @@ import com.hikmetsuicmez.eventverse.exception.*;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.repository.ParticipantRepository;
 import com.hikmetsuicmez.eventverse.mapper.ParticipantMapper;
+import com.hikmetsuicmez.eventverse.service.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class ParticipantService {
     private final EventRepository eventRepository;
     private final ParticipantMapper participantMapper;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Transactional
     public ParticipantResponse addParticipant(UUID eventId) {
@@ -64,7 +66,13 @@ public class ParticipantService {
         // 7. Katılımcıyı kaydet
         Participant savedParticipant = participantRepository.save(participant);
 
-        // 8. Response'u dön
+        // 8. Etkinlik sahibine bildirim gönder
+        notificationService.createParticipationRequestNotification(savedParticipant);
+
+        // 9. Katılımcıya bildirim gönder
+        notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
+
+        // 10. Response'u dön
         return participantMapper.toResponse(savedParticipant);
     }
 
@@ -121,7 +129,12 @@ public class ParticipantService {
             participant.setRegistrationDate(LocalDateTime.now());
         }
         
-        return participantMapper.toResponse(participantRepository.save(participant));
+        Participant savedParticipant = participantRepository.save(participant);
+        
+        // Bildirim oluştur
+        notificationService.createParticipationStatusNotification(savedParticipant);
+        
+        return participantMapper.toResponse(savedParticipant);
     }
 
 }

@@ -67,6 +67,31 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(EventExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleEventExpiredException(EventExpiredException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(
+            LocalDateTime.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            "Bad Request",
+            ex.getMessage(),
+            request.getDescription(false)
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AlreadyParticipatingException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyParticipatingException(AlreadyParticipatingException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(
+            LocalDateTime.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            "Bad Request",
+            ex.getMessage(),
+            request.getDescription(false)
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
@@ -101,27 +126,6 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(EventExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleEventExpiredException(EventExpiredException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-            LocalDateTime.now(),
-            HttpStatus.BAD_REQUEST.value(),
-            "Bad Request",
-            ex.getMessage(),
-            request.getDescription(false)
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(AlreadyParticipatingException.class)
-    public ResponseEntity<ErrorResponse> handleAlreadyParticipatingException(AlreadyParticipatingException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-            LocalDateTime.now(),
-            HttpStatus.BAD_REQUEST.value(),
-            "Bad Request",
-            ex.getMessage(),
-            request.getDescription(false)
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
+    
+   
 } 

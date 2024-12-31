@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hikmetsuicmez.eventverse.dto.request.EventRequest;
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
@@ -23,7 +24,9 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
     private final UserService userService;
+    private final NotificationService notificationService;
 
+    @Transactional
     public EventResponse createEvent(EventRequest request) {
         User currentUser = userService.getCurrentUser();
         
@@ -31,6 +34,9 @@ public class EventService {
         event.setOrganizer(currentUser);
         
         Event savedEvent = eventRepository.save(event);
+        
+        notificationService.createEventCreationNotification(savedEvent);
+        
         return eventMapper.toResponse(savedEvent);
     }
 
