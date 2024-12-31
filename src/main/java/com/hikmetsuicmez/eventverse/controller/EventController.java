@@ -7,6 +7,7 @@ import com.hikmetsuicmez.eventverse.dto.request.EventRequest;
 import com.hikmetsuicmez.eventverse.dto.response.ApiResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
 import com.hikmetsuicmez.eventverse.dto.response.ParticipantResponse;
+import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
 import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 import com.hikmetsuicmez.eventverse.service.EventService;
 import com.hikmetsuicmez.eventverse.service.ParticipantService;
@@ -72,5 +73,20 @@ public class EventController {
             @RequestParam ParticipantStatus status) {
         return ResponseEntity.ok(participantService.updateParticipantStatus(eventId, participantId, status));
     }
-    
+
+    @GetMapping("/locations")
+    public ApiResponse<List<EventLocationResponse>> getEventLocations() {
+        return ApiResponse.success(
+            eventService.getEventLocations(),
+            "Event locations retrieved successfully"
+        );
+    }
+
+    @GetMapping("/{eventId}/location")
+    public ApiResponse<EventLocationResponse> getEventLocation(@PathVariable UUID eventId) {
+        return ApiResponse.success(
+            eventService.getEventLocation(eventId),
+            "Event location retrieved successfully"
+        );
+    }
 }

@@ -28,4 +28,16 @@ public class EventRequest {
 
     @NotBlank(message = "Kategori boş olamaz")
     private String category;
+
+    @NotNull(message = "Latitude cannot be null")
+    private Double latitude;
+    
+    @NotNull(message = "Longitude cannot be null")
+    private Double longitude;
+    
+    @NotBlank(message = "City cannot be blank")
+    private String city;
+    
+    @NotBlank(message = "Country cannot be blank")
+    private String country;
 } 

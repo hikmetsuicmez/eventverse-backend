@@ -14,6 +14,8 @@ import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
+import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
+import com.hikmetsuicmez.eventverse.mapper.EventLocationMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +27,7 @@ public class EventService {
     private final EventMapper eventMapper;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final EventLocationMapper eventLocationMapper;
 
     @Transactional
     public EventResponse createEvent(EventRequest request) {
@@ -79,6 +82,19 @@ public class EventService {
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         return eventMapper.toResponse(event);
+    }
+
+    public List<EventLocationResponse> getEventLocations() {
+        return eventRepository.findAll().stream()
+            .map(eventLocationMapper::toLocationResponse)
+            .toList();
+    }
+
+    public EventLocationResponse getEventLocation(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+        
+        return eventLocationMapper.toLocationResponse(event);
     }
 
 }

@@ -30,4 +30,9 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "organizer_id")
     private User organizer;
+
+    private Double latitude;
+    private Double longitude;
+    private String city;
+    private String country;
 }
