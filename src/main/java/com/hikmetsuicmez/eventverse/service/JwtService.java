@@ -66,7 +66,7 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
     
-    private Date extractExpiration(String token) {
+    public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
     
@@ -75,7 +75,7 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
     
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()

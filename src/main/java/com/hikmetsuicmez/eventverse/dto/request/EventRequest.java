@@ -1,10 +1,12 @@
 package com.hikmetsuicmez.eventverse.dto.request;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDate;
 
 @Data
+@Builder
 public class EventRequest {
     @NotBlank(message = "Başlık boş olamaz")
     @Size(min = 3, max = 100, message = "Başlık 3-100 karakter arasında olmalıdır")

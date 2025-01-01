@@ -16,7 +16,6 @@ import com.hikmetsuicmez.eventverse.exception.*;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.repository.ParticipantRepository;
 import com.hikmetsuicmez.eventverse.mapper.ParticipantMapper;
-import com.hikmetsuicmez.eventverse.service.NotificationService;
 import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 
 import jakarta.transaction.Transactional;

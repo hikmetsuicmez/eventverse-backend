@@ -46,9 +46,14 @@ public class EventController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        
-        return ApiResponse.success(eventService.retrieveEvents(category, location, date), 
-            "Events retrieved successfully");
+
+        return ApiResponse.success(eventService.retrieveEvents(category, location, date),
+                "Events retrieved successfully");
+    }
+
+    @GetMapping("/my-events")
+    public ApiResponse<List<EventResponse>> getMyEvents() {
+        return ApiResponse.success(participantService.getUserEvents(), "User events retrieved successfully");
     }
 
     @GetMapping("/{eventId}")
@@ -77,26 +82,15 @@ public class EventController {
     @GetMapping("/locations")
     public ApiResponse<List<EventLocationResponse>> getEventLocations() {
         return ApiResponse.success(
-            eventService.getEventLocations(),
-            "Event locations retrieved successfully"
-        );
+                eventService.getEventLocations(),
+                "Event locations retrieved successfully");
     }
 
     @GetMapping("/{eventId}/location")
     public ApiResponse<EventLocationResponse> getEventLocation(@PathVariable UUID eventId) {
         return ApiResponse.success(
-            eventService.getEventLocation(eventId),
-            "Event location retrieved successfully"
-        );
+                eventService.getEventLocation(eventId),
+                "Event location retrieved successfully");
     }
 
-    @GetMapping("/my-events")
-    public ApiResponse<List<EventResponse>> getMyEvents() {
-        return ApiResponse.success(
-            participantService.getUserEvents(),
-            "User events retrieved successfully"
-        );
-    }
-
-  
 }
