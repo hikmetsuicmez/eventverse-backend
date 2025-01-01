@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
 import com.hikmetsuicmez.eventverse.dto.response.ParticipantResponse;
 import com.hikmetsuicmez.eventverse.entity.Event;
 import com.hikmetsuicmez.eventverse.entity.Participant;
@@ -16,6 +17,7 @@ import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.repository.ParticipantRepository;
 import com.hikmetsuicmez.eventverse.mapper.ParticipantMapper;
 import com.hikmetsuicmez.eventverse.service.NotificationService;
+import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class ParticipantService {
     private final ParticipantRepository participantRepository;
     private final EventRepository eventRepository;
     private final ParticipantMapper participantMapper;
+    private final EventMapper eventMapper;
     private final UserService userService;
     private final NotificationService notificationService;
 
@@ -137,4 +140,14 @@ public class ParticipantService {
         return participantMapper.toResponse(savedParticipant);
     }
 
+    public List<EventResponse> getUserEvents() {
+        User currentUser = userService.getCurrentUser();
+        
+        List<Participant> participants = participantRepository.findByUser(currentUser);
+        
+        return participants.stream()
+            .filter(participant -> participant.getStatus() == ParticipantStatus.APPROVED)
+            .map(participant -> eventMapper.toResponse(participant.getEvent()))
+            .toList();
+    }
 }

@@ -96,6 +96,5 @@ public class EventService {
         
         return eventLocationMapper.toLocationResponse(event);
     }
-
 }
 

@@ -89,4 +89,14 @@ public class EventController {
             "Event location retrieved successfully"
         );
     }
+
+    @GetMapping("/my-events")
+    public ApiResponse<List<EventResponse>> getMyEvents() {
+        return ApiResponse.success(
+            participantService.getUserEvents(),
+            "User events retrieved successfully"
+        );
+    }
+
+  
 }
