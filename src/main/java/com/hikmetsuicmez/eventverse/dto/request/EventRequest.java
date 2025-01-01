@@ -19,8 +19,13 @@ public class EventRequest {
     private LocalDate date;
 
     @NotBlank(message = "Konum boş olamaz")
-    @Size(max = 200, message = "Konum en fazla 200 karakter olabilir")
     private String location;
+
+    @NotBlank(message = "Adres detayı boş olamaz")
+    private String address;
+
+    @NotNull(message = "Konum bilgisi eksik")
+    private LocationRequest coordinates;
 
     @Min(value = 1, message = "Katılımcı sayısı en az 1 olmalıdır")
     @Max(value = 1000, message = "Katılımcı sayısı en fazla 1000 olabilir")
@@ -29,15 +34,34 @@ public class EventRequest {
     @NotBlank(message = "Kategori boş olamaz")
     private String category;
 
-    @NotNull(message = "Latitude cannot be null")
-    private Double latitude;
-    
-    @NotNull(message = "Longitude cannot be null")
-    private Double longitude;
-    
-    @NotBlank(message = "City cannot be blank")
-    private String city;
-    
-    @NotBlank(message = "Country cannot be blank")
-    private String country;
-} 
+    @Pattern(regexp = "^(https?://)?[\\w-]+(\\.[\\w-]+)+[/#?]?.*\\.(jpg|jpeg|png|gif)$", message = "Geçerli bir resim URL'si giriniz")
+    private String eventImage;
+
+    private boolean hasAgeLimit;
+
+    @Min(value = 0, message = "Yaş sınırı 0'dan küçük olamaz")
+    @Max(value = 100, message = "Yaş sınırı 100'den büyük olamaz")
+    private Integer ageLimit;
+
+    private boolean isPaid;
+
+    @DecimalMin(value = "0.0", message = "Ücret 0'dan küçük olamaz")
+    @DecimalMax(value = "100000.0", message = "Ücret 100.000 TL'den fazla olamaz")
+    private Double price;
+
+    @AssertTrue(message = "Yaş sınırı varsa, yaş limiti belirtilmelidir")
+    private boolean isAgeLimitValid() {
+        if (hasAgeLimit) {
+            return ageLimit != null;
+        }
+        return true;
+    }
+
+    @AssertTrue(message = "Etkinlik ücretliyse, ücret belirtilmelidir")
+    private boolean isPriceValid() {
+        if (isPaid) {
+            return price != null && price > 0;
+        }
+        return true;
+    }
+}

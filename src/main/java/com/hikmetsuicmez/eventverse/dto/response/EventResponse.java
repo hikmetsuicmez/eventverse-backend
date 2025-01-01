@@ -20,4 +20,9 @@ public class EventResponse {
     private int maxParticipants;
     private String category;
     private OrganizerResponse organizer;
-} 
+    private String eventImage;
+    private boolean hasAgeLimit;
+    private Integer ageLimit;
+    private boolean isPaid;
+    private Double price;
+}
