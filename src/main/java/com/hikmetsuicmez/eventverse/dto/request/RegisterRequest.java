@@ -11,17 +11,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterRequest {
-    
+
     @NotBlank(message = "Email boş olamaz")
     @Email(message = "Geçerli bir email adresi giriniz")
     private String email;
 
     @NotBlank(message = "Şifre boş olamaz")
     @Size(min = 6, max = 20, message = "Şifre 6-20 karakter arasında olmalıdır")
-    @Pattern(
-        regexp = "^(?=.*[0-9])(?=.*[a-zçğıöşü])(?=.*[A-ZÇĞİÖŞÜ])(?=.*[@#$%^&+=.*])(?=\\S+$).{8,}$",
-        message = "Şifre en az bir rakam, bir küçük harf, bir büyük harf ve bir özel karakter içermelidir"
-    )
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zçğıöşü])(?=.*[A-ZÇĞİÖŞÜ])(?=.*[@#$%^&+=.*])(?=\\S+$).{8,}$", message = "Şifre en az bir rakam, bir küçük harf, bir büyük harf ve bir özel karakter içermelidir")
     private String password;
 
     @NotBlank(message = "İsim boş olamaz")
@@ -38,7 +35,6 @@ public class RegisterRequest {
     @Size(max = 200, message = "Adres en fazla 200 karakter olabilir")
     private String address;
 
-    @Pattern(regexp = "^(https?://)?[\\w-]+(\\.[\\w-]+)+[/#?]?.*$", 
-             message = "Geçerli bir profil resmi URL'si giriniz")
-    private String profilePicture;
-} 
+    @Pattern(regexp = "^(https?:\\/\\/)[\\w-]+(\\.[\\w-]+)+([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?$", message = "Geçerli bir profil resmi URL'si giriniz")
+    private String profilePicture = "https://www.gravatar.com/avatar/default?d=mp"; // Varsayılan değer
+}

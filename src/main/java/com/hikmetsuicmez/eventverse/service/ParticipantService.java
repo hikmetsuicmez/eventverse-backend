@@ -41,23 +41,28 @@ public class ParticipantService {
         // 2. Mevcut kullanıcıyı al
         User currentUser = userService.getCurrentUser();
 
-        // 3. Etkinlik tarihini kontrol et
+        // 3. Organizatör kontrolü
+        if (event.getOrganizer().getId().equals(currentUser.getId())) {
+            throw new OrganizerJoinException("Event organizer cannot join their own event");
+        }
+
+        // 4. Etkinlik tarihini kontrol et
         if (event.getDate().atStartOfDay().isBefore(LocalDateTime.now())) {
             throw new EventExpiredException("Event has already expired");
         }
 
-        // 4. Kullanıcının zaten katılıp katılmadığını kontrol et
+        // 5. Kullanıcının zaten katılıp katılmadığını kontrol et
         if (participantRepository.existsByEventIdAndUserId(eventId, currentUser.getId())) {
             throw new AlreadyParticipatingException("You are already participating in this event");
         }
 
-        // 5. Etkinlik kapasitesini kontrol et
+        // 6. Etkinlik kapasitesini kontrol et
         long currentParticipants = participantRepository.countByEventId(eventId);
         if (currentParticipants >= event.getMaxParticipants()) {
             throw new EventCapacityFullException("Event has reached its maximum capacity");
         }
 
-        // 6. Yeni katılımcı oluştur
+        // 7. Yeni katılımcı oluştur
         Participant participant = Participant.builder()
                 .event(event)
                 .user(currentUser)
@@ -65,16 +70,16 @@ public class ParticipantService {
                 .registrationDate(LocalDateTime.now())
                 .build();
 
-        // 7. Katılımcıyı kaydet
+        // 8. Katılımcıyı kaydet
         Participant savedParticipant = participantRepository.save(participant);
 
-        // 8. Etkinlik sahibine bildirim gönder
+        // 9. Etkinlik sahibine bildirim gönder
         notificationService.createParticipationRequestNotification(savedParticipant);
 
-        // 9. Katılımcıya bildirim gönder
+        // 10. Katılımcıya bildirim gönder
         notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
 
-        // 10. Response'u dön
+        // 11. Response'u dön
         return participantMapper.toResponse(savedParticipant);
     }
 

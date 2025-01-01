@@ -3,6 +3,8 @@ package com.hikmetsuicmez.eventverse.dto.response;
 import lombok.Data;
 import java.time.LocalDate;
 import java.util.UUID;
+
+
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -25,4 +27,8 @@ public class EventResponse {
     private Integer ageLimit;
     private boolean isPaid;
     private Double price;
+    private String city;
+    private String country;
+    private Double latitude;
+    private Double longitude;
 }
