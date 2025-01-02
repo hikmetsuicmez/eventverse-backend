@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -31,4 +33,13 @@ public class NotificationController {
             "Notification marked as read successfully"
         );
     }
+
+    @GetMapping("/unread")
+    public ApiResponse<List<NotificationResponse>> getUnreadNotifications() {
+        return ApiResponse.success(
+            notificationService.getUnreadNotifications(),
+            "Unread notifications retrieved successfully"
+        );
+    }
+    
 } 

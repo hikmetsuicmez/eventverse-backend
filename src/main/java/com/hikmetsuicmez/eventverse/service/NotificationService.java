@@ -60,6 +60,15 @@ public class NotificationService {
         return notificationMapper.toResponse(notificationRepository.save(notification));
     }
 
+    public List<NotificationResponse> getUnreadNotifications() {
+        List<Notification> notifications = notificationRepository
+            .findByRecipientAndStatusOrderByTimestampDesc(userService.getCurrentUser(), NotificationStatus.UNREAD);
+        
+        return notifications.stream()
+            .map(notificationMapper::toResponse)
+            .toList();
+    }
+
     // Yeni metod ekleyelim
     public void createParticipationRequestNotification(Participant participant) {
         Notification notification = Notification.builder()
