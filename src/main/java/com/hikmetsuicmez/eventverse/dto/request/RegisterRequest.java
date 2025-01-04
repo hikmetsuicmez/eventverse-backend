@@ -34,7 +34,4 @@ public class RegisterRequest {
 
     @Size(max = 200, message = "Adres en fazla 200 karakter olabilir")
     private String address;
-
-    @Pattern(regexp = "^(https?:\\/\\/)[\\w-]+(\\.[\\w-]+)+([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?$", message = "Geçerli bir profil resmi URL'si giriniz")
-    private String profilePicture = "https://www.gravatar.com/avatar/default?d=mp"; // Varsayılan değer
 }

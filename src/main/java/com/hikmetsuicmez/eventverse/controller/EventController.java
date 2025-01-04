@@ -53,7 +53,12 @@ public class EventController {
 
     @GetMapping("/my-events")
     public ApiResponse<List<EventResponse>> getMyEvents() {
-        return ApiResponse.success(participantService.getUserEvents(), "User events retrieved successfully");
+        return ApiResponse.success(participantService.getUserEvents(), "Katıldığınız etkinlikler başarıyla getirildi");
+    }
+
+    @GetMapping("/my-created-events")
+    public ApiResponse<List<EventResponse>> getMyCreatedEvents() {
+        return ApiResponse.success(eventService.getCurrentUserEvents(), "Oluşturduğunuz etkinlikler başarıyla getirildi");
     }
 
     @GetMapping("/{eventId}")

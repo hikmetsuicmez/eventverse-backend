@@ -19,6 +19,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private static final String DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/default?d=mp";
 
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
@@ -28,7 +29,7 @@ public class AuthenticationService {
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
                 .address(request.getAddress())
-                .profilePicture(request.getProfilePicture())
+                .profilePicture(DEFAULT_PROFILE_PICTURE)
                 .build();
         userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);

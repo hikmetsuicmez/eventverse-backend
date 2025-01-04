@@ -96,5 +96,13 @@ public class EventService {
         
         return eventLocationMapper.toLocationResponse(event);
     }
+
+    public List<EventResponse> getCurrentUserEvents() {
+        User currentUser = userService.getCurrentUser();
+        List<Event> events = eventRepository.findByOrganizer(currentUser);
+        return events.stream()
+                .map(eventMapper::toResponse)
+                .toList();
+    }
 }
 
