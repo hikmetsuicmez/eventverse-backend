@@ -14,6 +14,9 @@ public interface FavoriteMapper {
 
     @Mapping(source = "event.id", target = "eventId")
     @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "event.title", target = "eventTitle")
+    @Mapping(source = "event.description", target = "eventDescription")
+    @Mapping(source = "event.date", target = "eventDate")
     FavoriteResponse toResponse(Favorite favorite);
 
 }

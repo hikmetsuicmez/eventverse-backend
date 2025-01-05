@@ -32,9 +32,14 @@ public class FavoriteService {
         Event event = eventRepository.findById(favoriteRequest.getEventId())
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-        Favorite favorite = favoriteMapper.toEntity(favoriteRequest);
-        favorite.setUser(currentUser);
-        favorite.setEvent(event);
+        if (favoriteRepository.existsByUserAndEvent(currentUser, event)) {
+            throw new IllegalStateException("Bu etkinlik zaten favorilerinizde");
+        }
+
+        Favorite favorite = Favorite.builder()
+            .user(currentUser)
+            .event(event)
+            .build();
 
         Favorite savedFavorite = favoriteRepository.save(favorite);
         notificationService.createFavoriteNotification(savedFavorite);
@@ -56,6 +61,17 @@ public class FavoriteService {
         
         favoriteRepository.deleteById(favoriteId);
         notificationService.createFavoriteDeleteNotification(favorite);
+    }
+
+    public FavoriteResponse getFavoriteStatus(UUID eventId) {
+        User currentUser = userService.getCurrentUser();
+        Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        Favorite favorite = favoriteRepository.findByUserAndEvent(currentUser, event)
+            .orElse(null);
+
+        return favorite != null ? favoriteMapper.toResponse(favorite) : null;
     }
 }
 

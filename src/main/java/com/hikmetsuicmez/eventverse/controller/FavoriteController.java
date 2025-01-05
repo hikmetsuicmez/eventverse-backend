@@ -43,4 +43,10 @@ public class FavoriteController {
         favoriteService.deleteFavorite(favoriteId);
         return ApiResponse.success("Favorite deleted successfully");
     }
+
+    @GetMapping("/status/{eventId}")
+    public ApiResponse<FavoriteResponse> getFavoriteStatus(@PathVariable UUID eventId) {
+        FavoriteResponse favoriteResponse = favoriteService.getFavoriteStatus(eventId);
+        return ApiResponse.success(favoriteResponse);
+    }
 }
