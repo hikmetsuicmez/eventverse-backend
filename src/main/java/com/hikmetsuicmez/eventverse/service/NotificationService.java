@@ -2,6 +2,7 @@ package com.hikmetsuicmez.eventverse.service;
 
 import com.hikmetsuicmez.eventverse.dto.response.NotificationResponse;
 import com.hikmetsuicmez.eventverse.entity.Event;
+import com.hikmetsuicmez.eventverse.entity.Favorite;
 import com.hikmetsuicmez.eventverse.entity.Notification;
 import com.hikmetsuicmez.eventverse.entity.Participant;
 import com.hikmetsuicmez.eventverse.enums.NotificationStatus;
@@ -108,6 +109,30 @@ public class NotificationService {
             .timestamp(LocalDateTime.now())
             .build();
         
+        notificationRepository.save(notification);
+    }
+
+    public void createFavoriteNotification(Favorite favorite) {
+        Notification notification = Notification.builder()
+            .recipient(favorite.getUser())
+            .event(favorite.getEvent())
+            .message(favorite.getEvent().getTitle() + " etkinliği favorilere eklendi.")
+            .status(NotificationStatus.UNREAD)
+            .timestamp(LocalDateTime.now())
+            .build();
+            
+        notificationRepository.save(notification);
+    }
+
+    public void createFavoriteDeleteNotification(Favorite favorite) {
+        Notification notification = Notification.builder()
+            .recipient(favorite.getUser())
+            .event(favorite.getEvent())
+            .message(favorite.getEvent().getTitle() + " etkinliği favorilerden kaldırıldı.")
+            .status(NotificationStatus.UNREAD)
+            .timestamp(LocalDateTime.now())
+            .build();
+
         notificationRepository.save(notification);
     }
 } 

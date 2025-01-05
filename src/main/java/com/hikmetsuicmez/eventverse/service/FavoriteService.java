@@ -12,6 +12,7 @@ import com.hikmetsuicmez.eventverse.entity.Favorite;
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
 import com.hikmetsuicmez.eventverse.repository.FavoriteRepository;
+
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.mapper.FavoriteMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class FavoriteService {
     private final UserService userService;
     private final EventRepository eventRepository;
     private final FavoriteMapper favoriteMapper;
+    private final NotificationService notificationService;
 
     public FavoriteResponse addFavorite(FavoriteRequest favoriteRequest) {
         User currentUser = userService.getCurrentUser();
@@ -35,6 +37,7 @@ public class FavoriteService {
         favorite.setEvent(event);
 
         Favorite savedFavorite = favoriteRepository.save(favorite);
+        notificationService.createFavoriteNotification(savedFavorite);
 
         return favoriteMapper.toResponse(savedFavorite);
     }
@@ -48,7 +51,11 @@ public class FavoriteService {
     }
 
     public void deleteFavorite(UUID favoriteId) {
+        Favorite favorite = favoriteRepository.findById(favoriteId)
+            .orElseThrow(() -> new ResourceNotFoundException("Favorite not found"));
+        
         favoriteRepository.deleteById(favoriteId);
+        notificationService.createFavoriteDeleteNotification(favorite);
     }
 }
 
