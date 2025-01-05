@@ -2,6 +2,7 @@ package com.hikmetsuicmez.eventverse.dto.response;
 
 import lombok.Data;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -31,4 +32,5 @@ public class EventResponse {
     private String country;
     private Double latitude;
     private Double longitude;
+    private List<ParticipantResponse> participants;
 }

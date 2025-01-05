@@ -14,4 +14,5 @@ public class NotificationResponse {
     private NotificationStatus status;
     private LocalDateTime timestamp;
     private String eventTitle;
+    private UUID eventId;
 } 

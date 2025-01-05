@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {
     @Mapping(source = "event.title", target = "eventTitle")
+    @Mapping(source = "event.id", target = "eventId")
     @Mapping(source = "timestamp", target = "timestamp")
     NotificationResponse toResponse(Notification notification);
 } 

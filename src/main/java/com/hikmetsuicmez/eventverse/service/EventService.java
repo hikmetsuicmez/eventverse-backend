@@ -12,6 +12,7 @@ import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
 import com.hikmetsuicmez.eventverse.entity.Event;
 import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
+import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
 import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
@@ -25,6 +26,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
+    private final UserRepository userRepository;
     private final UserService userService;
     private final NotificationService notificationService;
     private final EventLocationMapper eventLocationMapper;
@@ -100,6 +102,22 @@ public class EventService {
     public List<EventResponse> getCurrentUserEvents() {
         User currentUser = userService.getCurrentUser();
         List<Event> events = eventRepository.findByOrganizer(currentUser);
+        return events.stream()
+                .map(eventMapper::toResponse)
+                .toList();
+    }
+
+    public EventResponse getEventById(UUID id) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+        return eventMapper.toResponse(event);
+    }
+
+    public List<EventResponse> getUserCreatedEvents(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        List<Event> events = eventRepository.findByOrganizer(user);
         return events.stream()
                 .map(eventMapper::toResponse)
                 .toList();

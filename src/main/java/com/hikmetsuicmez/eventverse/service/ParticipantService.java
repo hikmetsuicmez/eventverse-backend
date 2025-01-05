@@ -15,6 +15,7 @@ import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 import com.hikmetsuicmez.eventverse.exception.*;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.repository.ParticipantRepository;
+import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import com.hikmetsuicmez.eventverse.mapper.ParticipantMapper;
 import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 
@@ -27,6 +28,7 @@ public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
     private final ParticipantMapper participantMapper;
     private final EventMapper eventMapper;
     private final UserService userService;
@@ -153,5 +155,15 @@ public class ParticipantService {
             .filter(participant -> participant.getStatus() == ParticipantStatus.APPROVED)
             .map(participant -> eventMapper.toResponse(participant.getEvent()))
             .toList();
+    }
+
+    public List<EventResponse> getUserByIdEvents(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        List<Participant> participants = participantRepository.findByUser(user);
+        return participants.stream()
+                .map(participant -> eventMapper.toResponse(participant.getEvent()))
+                .toList();
     }
 }

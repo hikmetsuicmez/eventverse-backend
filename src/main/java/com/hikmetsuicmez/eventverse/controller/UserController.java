@@ -6,6 +6,9 @@ import com.hikmetsuicmez.eventverse.dto.response.UserResponse;
 import com.hikmetsuicmez.eventverse.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
+
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +23,12 @@ public class UserController {
     @GetMapping("/profile")
     public ApiResponse<UserResponse> getCurrentUser() {
         UserResponse userResponse = userService.loggedInUser();
+        return ApiResponse.success(userResponse, "Kullanıcı bilgileri başarıyla getirildi");
+    }
+
+    @GetMapping("/{userId}")
+    public ApiResponse<UserResponse> getUserById(@PathVariable UUID userId) {
+        UserResponse userResponse = userService.getUserById(userId);
         return ApiResponse.success(userResponse, "Kullanıcı bilgileri başarıyla getirildi");
     }
 

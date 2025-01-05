@@ -38,7 +38,7 @@ public class NotificationService {
         Notification notification = Notification.builder()
             .recipient(participant.getUser())
             .event(participant.getEvent())
-            .message("Katılım talebiniz " + participant.getStatus().toString().toLowerCase() + " edildi: " 
+            .message("Katılım talebiniz " + (participant.getStatus().toString().toLowerCase()) + "Kabul edildi: " 
                     + participant.getEvent().getTitle())
             .status(NotificationStatus.UNREAD)
             .timestamp(LocalDateTime.now())

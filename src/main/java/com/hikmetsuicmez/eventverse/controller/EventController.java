@@ -56,6 +56,16 @@ public class EventController {
         return ApiResponse.success(participantService.getUserEvents(), "Katıldığınız etkinlikler başarıyla getirildi");
     }
 
+    @GetMapping("/{userId}/events")
+    public ApiResponse<List<EventResponse>> getUserEvents(@PathVariable UUID userId) {
+        return ApiResponse.success(participantService.getUserByIdEvents(userId), "Kullanıcının etkinlikleri başarıyla getirildi");
+    }
+
+    @GetMapping("/{userId}/created-events")
+    public ApiResponse<List<EventResponse>> getUserCreatedEvents(@PathVariable UUID userId) {
+        return ApiResponse.success(eventService.getUserCreatedEvents(userId), "Kullanıcının oluşturduğu etkinlikler başarıyla getirildi");
+    }
+
     @GetMapping("/my-created-events")
     public ApiResponse<List<EventResponse>> getMyCreatedEvents() {
         return ApiResponse.success(eventService.getCurrentUserEvents(), "Oluşturduğunuz etkinlikler başarıyla getirildi");

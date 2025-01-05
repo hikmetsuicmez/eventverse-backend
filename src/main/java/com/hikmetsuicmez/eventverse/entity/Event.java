@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.List;
 
 @Entity
 @Data
@@ -50,5 +51,8 @@ public class Event {
 
     @Column(name = "event_image")
     private String eventImage;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    private List<Participant> participants;
 
 }

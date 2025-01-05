@@ -6,12 +6,13 @@ import com.hikmetsuicmez.eventverse.dto.response.UserResponse;
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
+import com.hikmetsuicmez.eventverse.mapper.UserMapper;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
     private final String UPLOAD_BASE_DIR = "D:/uploads/eventverse";
     private final String PROFILE_PICTURES_DIR = "/profile-pictures";
 
@@ -46,6 +48,13 @@ public class UserService {
                 .address(currentUser.getAddress())
                 .profilePicture(currentUser.getProfilePicture())
                 .build();
+    }
+
+    public UserResponse getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+       return userMapper.toResponse(user);
     }
 
     public ApiResponse<String> updateProfilePicture(MultipartFile file) {
@@ -99,11 +108,6 @@ public class UserService {
                 contentType.equals("image/jpg") ||
                 contentType.equals("image/png")
         );
-    }
-
-    public User getUserById(UUID userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı"));
     }
 
     public UserResponse updateProfile(UpdateProfileRequest request) {
