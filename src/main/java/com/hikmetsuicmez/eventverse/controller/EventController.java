@@ -3,14 +3,17 @@ package com.hikmetsuicmez.eventverse.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hikmetsuicmez.eventverse.dto.request.CommentRequest;
 import com.hikmetsuicmez.eventverse.dto.request.EventRequest;
 import com.hikmetsuicmez.eventverse.dto.response.ApiResponse;
+import com.hikmetsuicmez.eventverse.dto.response.CommentResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
 import com.hikmetsuicmez.eventverse.dto.response.ParticipantResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
 import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 import com.hikmetsuicmez.eventverse.service.EventService;
 import com.hikmetsuicmez.eventverse.service.ParticipantService;
+import com.hikmetsuicmez.eventverse.service.CommentService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,9 @@ public class EventController {
 
     private final EventService eventService;
     private final ParticipantService participantService;
+    private final CommentService commentService;
+
+    // Event
 
     @PostMapping
     public ApiResponse<EventResponse> createEvent(@RequestBody @Valid EventRequest request) {
@@ -76,6 +82,8 @@ public class EventController {
         return ApiResponse.success(eventService.retrieveEvent(eventId), "Event retrieved successfully");
     }
 
+    // Participant
+
     @PostMapping("/{eventId}/participants")
     public ApiResponse<ParticipantResponse> addParticipant(@PathVariable UUID eventId) {
         return ApiResponse.success(participantService.addParticipant(eventId), "Participant added successfully");
@@ -94,6 +102,8 @@ public class EventController {
         return ResponseEntity.ok(participantService.updateParticipantStatus(eventId, participantId, status));
     }
 
+    // Location
+
     @GetMapping("/locations")
     public ApiResponse<List<EventLocationResponse>> getEventLocations() {
         return ApiResponse.success(
@@ -106,6 +116,18 @@ public class EventController {
         return ApiResponse.success(
                 eventService.getEventLocation(eventId),
                 "Event location retrieved successfully");
+    }
+
+    // Comment
+
+    @PostMapping("/{eventId}/comments")
+    public ApiResponse<CommentResponse> createComment(@PathVariable UUID eventId, @RequestBody CommentRequest request) {
+        return ApiResponse.success(commentService.createComment(eventId, request), "Comment created successfully");
+    }
+
+    @GetMapping("/{eventId}/comments")
+    public ApiResponse<List<CommentResponse>> getComments(@PathVariable UUID eventId) {
+        return ApiResponse.success(commentService.getCommentsByEventId(eventId), "Comments retrieved successfully");
     }
 
 }
