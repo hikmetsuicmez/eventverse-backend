@@ -6,6 +6,7 @@ import com.hikmetsuicmez.eventverse.dto.response.AuthenticationResponse;
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationService {
 
     private final UserRepository userRepository;
@@ -22,6 +24,11 @@ public class AuthenticationService {
     private static final String DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/default?d=mp";
 
     public AuthenticationResponse register(RegisterRequest request) {
+        log.info("Yeni kullanıcı kaydı başlatıldı: {}", request.getEmail());
+        log.debug("Kayıt detayları: firstName={}, lastName={}, email={}, birthDate={}, phoneNumber={}, address={}",
+            request.getFirstName(), request.getLastName(), request.getEmail(), 
+            request.getBirthDate(), request.getPhoneNumber(), request.getAddress());
+
         var user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -29,6 +36,7 @@ public class AuthenticationService {
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
                 .address(request.getAddress())
+                .birthDate(request.getBirthDate())
                 .profilePicture(DEFAULT_PROFILE_PICTURE)
                 .build();
         userRepository.save(user);

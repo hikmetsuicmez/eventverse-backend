@@ -49,6 +49,7 @@ public class UserService {
                 .phoneNumber(currentUser.getPhoneNumber())
                 .address(currentUser.getAddress())
                 .profilePicture(currentUser.getProfilePicture())
+                .birthDate(currentUser.getBirthDate())
                 .build();
     }
 
@@ -74,6 +75,9 @@ public class UserService {
         if (request.getAddress() != null) {
             currentUser.setAddress(request.getAddress());
         }
+        if (request.getBirthDate() != null) {
+            currentUser.setBirthDate(request.getBirthDate());
+        }
 
         User updatedUser = userRepository.save(currentUser);
 
@@ -85,6 +89,7 @@ public class UserService {
                 .phoneNumber(updatedUser.getPhoneNumber())
                 .address(updatedUser.getAddress())
                 .profilePicture(updatedUser.getProfilePicture())
+                .birthDate(updatedUser.getBirthDate())
                 .build();
     }
 
