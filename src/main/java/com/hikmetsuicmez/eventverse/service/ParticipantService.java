@@ -75,11 +75,16 @@ public class ParticipantService {
         // 8. Katılımcıyı kaydet
         Participant savedParticipant = participantRepository.save(participant);
 
-        // 9. Etkinlik sahibine bildirim gönder
-        notificationService.createParticipationRequestNotification(savedParticipant);
+        try {
+            // 9. Etkinlik sahibine bildirim gönder
+            notificationService.createParticipationRequestNotification(savedParticipant);
 
-        // 10. Katılımcıya bildirim gönder
-        notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
+            // 10. Katılımcıya bildirim gönder
+            notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
+        } catch (Exception e) {
+            // Bildirim gönderme hatası olsa bile katılım işlemi başarılı sayılır
+            System.err.println("Bildirim gönderilirken hata oluştu: " + e.getMessage());
+        }
 
         // 11. Response'u dön
         return participantMapper.toResponse(savedParticipant);
@@ -96,10 +101,14 @@ public class ParticipantService {
                 .toList();
     }
 
+    @Transactional
     public ParticipantResponse updateParticipantStatus(UUID eventId, UUID participantId, ParticipantStatus status) {
-        System.out.println("Received status: " + status); // Debug için
+        // Status null kontrolü
+        if (status == null) {
+            throw new IllegalArgumentException("Status cannot be null");
+        }
 
-        // Önce etkinliğin var olduğunu kontrol et
+        // Etkinliği bul
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -118,30 +127,27 @@ public class ParticipantService {
             throw new UnauthorizedAccessException("Only event organizer can update participant status");
         }
 
-        // Status null kontrolü
-        if (status == null) {
-            throw new IllegalArgumentException("Status cannot be null");
-        }
-
-        // Enum değerini kontrol et
-        try {
-            ParticipantStatus.valueOf(status.toString());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status value: " + status);
+        // Mevcut durumu kontrol et
+        if (participant.getStatus() == status) {
+            return participantMapper.toResponse(participant);
         }
 
         // Status güncelleme
         participant.setStatus(status);
-        
-        // Eğer registration date null ise şu anki zamanı set et
         if (participant.getRegistrationDate() == null) {
             participant.setRegistrationDate(LocalDateTime.now());
         }
         
+        // Önce katılımcıyı kaydet
         Participant savedParticipant = participantRepository.save(participant);
         
-        // Bildirim oluştur
-        notificationService.createParticipationStatusNotification(savedParticipant);
+        try {
+            // Bildirim oluştur
+            notificationService.createParticipationStatusNotification(savedParticipant);
+        } catch (Exception e) {
+            // Bildirim hatası olsa bile işleme devam et
+            System.err.println("Katılımcı durumu bildirimi gönderilirken hata: " + e.getMessage());
+        }
         
         return participantMapper.toResponse(savedParticipant);
     }

@@ -1,6 +1,7 @@
 package com.hikmetsuicmez.eventverse.controller;
 
 import com.hikmetsuicmez.eventverse.dto.request.UpdateProfileRequest;
+import com.hikmetsuicmez.eventverse.dto.request.DeleteAccountRequest;
 import com.hikmetsuicmez.eventverse.dto.response.ApiResponse;
 import com.hikmetsuicmez.eventverse.dto.response.UserResponse;
 import com.hikmetsuicmez.eventverse.service.UserService;
@@ -38,6 +39,13 @@ public class UserController {
         return ApiResponse.success(updatedUser, "Profil bilgileri başarıyla güncellendi");
     }
 
+    
+    @DeleteMapping
+    public ApiResponse<String> deleteUser(@RequestBody @Valid DeleteAccountRequest request) {
+        userService.deleteUser(request.getPassword());
+        return ApiResponse.success("Hesabınız başarıyla silindi");
+    }
+
     @PostMapping(value = "/profile/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<String> uploadProfilePicture(@RequestParam("file") MultipartFile file) {
         if (!isImageFile(file)) {
@@ -54,4 +62,5 @@ public class UserController {
                 contentType.equals("image/jpg")
         );
     }
+
 }

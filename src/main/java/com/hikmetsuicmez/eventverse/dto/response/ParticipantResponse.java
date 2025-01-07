@@ -12,7 +12,7 @@ import java.util.UUID;
 public class ParticipantResponse {
     private UUID id;
     private UserResponse user;
-    private EventResponse event;
+    private UUID eventId;
     private ParticipantStatus status;
     private LocalDateTime registrationDate;
 } 

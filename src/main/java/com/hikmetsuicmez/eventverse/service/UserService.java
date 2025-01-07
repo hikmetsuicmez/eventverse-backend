@@ -7,6 +7,7 @@ import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.repository.UserRepository;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
 import com.hikmetsuicmez.eventverse.mapper.UserMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
     private final String UPLOAD_BASE_DIR = "D:/uploads/eventverse";
     private final String PROFILE_PICTURES_DIR = "/profile-pictures";
 
@@ -52,9 +54,56 @@ public class UserService {
 
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-       return userMapper.toResponse(user);
+        return userMapper.toResponse(user);
+    }
+
+    public UserResponse updateProfile(UpdateProfileRequest request) {
+        User currentUser = getCurrentUser();
+
+        if (request.getFirstName() != null) {
+            currentUser.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            currentUser.setLastName(request.getLastName());
+        }
+        if (request.getPhoneNumber() != null) {
+            currentUser.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getAddress() != null) {
+            currentUser.setAddress(request.getAddress());
+        }
+
+        User updatedUser = userRepository.save(currentUser);
+
+        return UserResponse.builder()
+                .id(updatedUser.getId())
+                .firstName(updatedUser.getFirstName())
+                .lastName(updatedUser.getLastName())
+                .email(updatedUser.getEmail())
+                .phoneNumber(updatedUser.getPhoneNumber())
+                .address(updatedUser.getAddress())
+                .profilePicture(updatedUser.getProfilePicture())
+                .build();
+    }
+
+    public void deleteUser(String password) {
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Şifre boş olamaz");
+        }
+
+        User currentUser = getCurrentUser();
+        if (!passwordEncoder.matches(password, currentUser.getPassword())) {
+            throw new IllegalArgumentException("Şifre yanlış");
+        }
+        try {
+            // Kullanıcıya ait diğer verileri temizle (yorumlar, yanıtlar, etkinlikler vs.)
+            userRepository.delete(currentUser);
+            SecurityContextHolder.clearContext();
+        } catch (Exception e) {
+            throw new RuntimeException("Hesap silinirken bir hata oluştu");
+        }
     }
 
     public ApiResponse<String> updateProfilePicture(MultipartFile file) {
@@ -67,7 +116,7 @@ public class UserService {
 
             Path baseDir = Paths.get(UPLOAD_BASE_DIR);
             Path profilePicsDir = baseDir.resolve(PROFILE_PICTURES_DIR.substring(1));
-            
+
             if (!Files.exists(baseDir)) {
                 Files.createDirectories(baseDir);
             }
@@ -77,7 +126,7 @@ public class UserService {
 
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path filePath = profilePicsDir.resolve(fileName);
-            
+
             String oldPicture = currentUser.getProfilePicture();
             if (oldPicture != null && !oldPicture.contains("gravatar.com")) {
                 try {
@@ -103,39 +152,9 @@ public class UserService {
 
     private boolean isSupportedFileFormat(MultipartFile file) {
         String contentType = file.getContentType();
-        return contentType != null && (
-                contentType.equals("image/jpeg") ||
+        return contentType != null && (contentType.equals("image/jpeg") ||
                 contentType.equals("image/jpg") ||
-                contentType.equals("image/png")
-        );
+                contentType.equals("image/png"));
     }
 
-    public UserResponse updateProfile(UpdateProfileRequest request) {
-        User currentUser = getCurrentUser();
-        
-        if (request.getFirstName() != null) {
-            currentUser.setFirstName(request.getFirstName());
-        }
-        if (request.getLastName() != null) {
-            currentUser.setLastName(request.getLastName());
-        }
-        if (request.getPhoneNumber() != null) {
-            currentUser.setPhoneNumber(request.getPhoneNumber());
-        }
-        if (request.getAddress() != null) {
-            currentUser.setAddress(request.getAddress());
-        }
-        
-        User updatedUser = userRepository.save(currentUser);
-        
-        return UserResponse.builder()
-                .id(updatedUser.getId())
-                .firstName(updatedUser.getFirstName())
-                .lastName(updatedUser.getLastName())
-                .email(updatedUser.getEmail())
-                .phoneNumber(updatedUser.getPhoneNumber())
-                .address(updatedUser.getAddress())
-                .profilePicture(updatedUser.getProfilePicture())
-                .build();
-    }
 }
