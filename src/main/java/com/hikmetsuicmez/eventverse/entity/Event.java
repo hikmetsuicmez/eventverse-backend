@@ -49,6 +49,9 @@ public class Event {
     @Column(name = "price")
     private Double price;
 
+    @Column(name = "event_time")
+    private String eventTime;
+
     @Column(name = "event_image")
     private String eventImage;
 

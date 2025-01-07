@@ -32,7 +32,6 @@ public class RegisterRequest {
     @Pattern(regexp = "^\\+90[0-9]{10}$", message = "Geçerli bir telefon numarası giriniz (+90 ile başlamalı)")
     private String phoneNumber;
     
-    @NotBlank(message = "Adres alanı boş bırakılamaz")
     private String address;
 
     @NotNull(message = "Doğum tarihi seçilmelidir")

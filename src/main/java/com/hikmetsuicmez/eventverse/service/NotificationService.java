@@ -204,6 +204,33 @@ public class NotificationService {
         }
     }
 
+    // Yorum cevabı bildirimi
+    public void createReplyNotification(Reply reply) {
+        if (reply == null || reply.getUser() == null || 
+            reply.getComment() == null || reply.getComment().getUser() == null) {
+            return;
+        }
+
+        try {
+            Notification notification = Notification.builder()
+                .recipient(reply.getComment().getUser())
+                .event(reply.getComment().getEvent())
+                .message(reply.getUser().getFirstName() + " " + 
+                        reply.getUser().getLastName() + 
+                        " kullanıcısı yorumunuza cevap verdi: " + 
+                        (reply.getContent().length() > 50 ? 
+                            reply.getContent().substring(0, 50) + "..." : 
+                            reply.getContent()))
+                .status(NotificationStatus.UNREAD)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+            notificationRepository.save(notification);
+        } catch (Exception e) {
+            System.err.println("Yorum cevabı bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
     // Bildirimi okundu olarak işaretle
     public NotificationResponse markAsRead(UUID notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
@@ -229,4 +256,17 @@ public class NotificationService {
             .map(notificationMapper::toResponse)
             .toList();
     }
+
+    public void markAllAsRead() {
+        List<Notification> notifications = notificationRepository.findByRecipientAndStatusOrderByTimestampDesc(
+            userService.getCurrentUser(), 
+            NotificationStatus.UNREAD
+        );
+        for (Notification notification : notifications) {
+            notification.setStatus(NotificationStatus.READ);
+        }
+        notificationRepository.saveAll(notifications);
+    }
+
+    
 } 

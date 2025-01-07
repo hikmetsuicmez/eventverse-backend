@@ -23,6 +23,7 @@ public class ReplyService {
     private final CommentRepository commentRepository;
     private final UserService userService;
     private final CommentMapper commentMapper;
+    private final NotificationService notificationService;
 
 
     public ReplyResponse createReply(UUID commentId, ReplyRequest request) {
@@ -46,6 +47,10 @@ public class ReplyService {
                 .build();
 
         Reply savedReply = replyRepository.save(reply);
+
+        if (!currentUser.getId().equals(comment.getUser().getId())) {
+            notificationService.createReplyNotification(savedReply);
+        }
 
         return commentMapper.toReplyResponse(savedReply);
     }

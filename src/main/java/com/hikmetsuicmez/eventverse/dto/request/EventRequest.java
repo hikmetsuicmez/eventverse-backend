@@ -20,6 +20,9 @@ public class EventRequest {
     @Future(message = "Tarih gelecekte olmalıdır")
     private LocalDate date;
 
+    @NotBlank(message = "Saat boş olamaz")
+    private String eventTime;
+
     @NotBlank(message = "Konum boş olamaz")
     private String location;
 

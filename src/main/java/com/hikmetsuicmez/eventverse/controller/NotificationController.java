@@ -41,5 +41,12 @@ public class NotificationController {
             "Unread notifications retrieved successfully"
         );
     }
+
+    @PatchMapping("/read-all")
+    public ApiResponse<String> markAllAsRead() {
+        notificationService.markAllAsRead();
+        return ApiResponse.success("All notifications marked as read successfully");
+    }
     
+
 } 

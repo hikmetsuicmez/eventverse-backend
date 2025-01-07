@@ -20,6 +20,7 @@ public class EventResponse {
     private String description;
     private LocalDate date;
     private String location;
+    private String eventTime;
     private int maxParticipants;
     private String category;
     private OrganizerResponse organizer;
