@@ -4,9 +4,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hikmetsuicmez.eventverse.dto.request.CommentRequest;
+import com.hikmetsuicmez.eventverse.dto.request.EventFilterRequest;
 import com.hikmetsuicmez.eventverse.dto.request.EventRequest;
 import com.hikmetsuicmez.eventverse.dto.response.ApiResponse;
 import com.hikmetsuicmez.eventverse.dto.response.CommentResponse;
+import com.hikmetsuicmez.eventverse.dto.response.EventFilterResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
 import com.hikmetsuicmez.eventverse.dto.response.ParticipantResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
@@ -27,6 +29,7 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -47,6 +50,17 @@ public class EventController {
         return ApiResponse.success(eventService.createEvent(request), "Event created successfully");
     }
 
+    @PostMapping("/filter")
+    public ApiResponse<Page<EventFilterResponse>> filterEvents(
+            @RequestBody @Valid EventFilterRequest request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "date") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortOrder) {
+        Page<EventFilterResponse> filteredEvents = eventService.filterEvents(request, page, size, sortBy, sortOrder);
+        return ApiResponse.success(filteredEvents, "Events filtered successfully!");
+    }
+
     @GetMapping
     public ApiResponse<List<EventResponse>> getEvents(
             @RequestParam(required = false) String category,
@@ -64,17 +78,20 @@ public class EventController {
 
     @GetMapping("/{userId}/events")
     public ApiResponse<List<EventResponse>> getUserEvents(@PathVariable UUID userId) {
-        return ApiResponse.success(participantService.getUserByIdEvents(userId), "Kullanıcının etkinlikleri başarıyla getirildi");
+        return ApiResponse.success(participantService.getUserByIdEvents(userId),
+                "Kullanıcının etkinlikleri başarıyla getirildi");
     }
 
     @GetMapping("/{userId}/created-events")
     public ApiResponse<List<EventResponse>> getUserCreatedEvents(@PathVariable UUID userId) {
-        return ApiResponse.success(eventService.getUserCreatedEvents(userId), "Kullanıcının oluşturduğu etkinlikler başarıyla getirildi");
+        return ApiResponse.success(eventService.getUserCreatedEvents(userId),
+                "Kullanıcının oluşturduğu etkinlikler başarıyla getirildi");
     }
 
     @GetMapping("/my-created-events")
     public ApiResponse<List<EventResponse>> getMyCreatedEvents() {
-        return ApiResponse.success(eventService.getCurrentUserEvents(), "Oluşturduğunuz etkinlikler başarıyla getirildi");
+        return ApiResponse.success(eventService.getCurrentUserEvents(),
+                "Oluşturduğunuz etkinlikler başarıyla getirildi");
     }
 
     @GetMapping("/{eventId}")
