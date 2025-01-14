@@ -40,7 +40,7 @@ public class EventRequest {
     private String category;
 
     @Pattern(regexp = "^(https?://)?[\\w-]+(\\.[\\w-]+)+[/#?]?.*\\.(jpg|jpeg|png|gif)$", message = "Geçerli bir resim URL'si giriniz")
-    private String eventImage;
+    private String imageUrl;
 
     private boolean hasAgeLimit;
 

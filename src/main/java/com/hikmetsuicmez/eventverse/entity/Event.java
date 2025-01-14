@@ -54,8 +54,8 @@ public class Event {
     @Column(name = "event_time")
     private String eventTime;
 
-    @Column(name = "event_image")
-    private String eventImage;
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Participant> participants;

@@ -2,6 +2,12 @@ package com.hikmetsuicmez.eventverse.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.hikmetsuicmez.eventverse.dto.request.CommentRequest;
 import com.hikmetsuicmez.eventverse.dto.request.EventFilterRequest;
@@ -22,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -29,9 +37,10 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.data.domain.Page;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PatchMapping;
 
 @RestController
@@ -42,6 +51,9 @@ public class EventController {
     private final EventService eventService;
     private final ParticipantService participantService;
     private final CommentService commentService;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     // Event
 
@@ -145,6 +157,37 @@ public class EventController {
     @GetMapping("/{eventId}/comments")
     public ApiResponse<List<CommentResponse>> getComments(@PathVariable UUID eventId) {
         return ApiResponse.success(commentService.getCommentsByEventId(eventId), "Comments retrieved successfully");
+    }
+
+    @PostMapping("/{eventId}/image")
+    @PreAuthorize("hasRole('USER')")
+    public ApiResponse<String> uploadEventImage(
+        @PathVariable UUID eventId,
+        @RequestParam("image") MultipartFile image) {
+        try {
+            String imageUrl = eventService.uploadEventImage(eventId, image);
+            return ApiResponse.success(imageUrl, "Resim başarıyla yüklendi");
+        } catch (Exception e) {
+            return ApiResponse.error("Resim yüklenirken bir hata oluştu: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/images/{fileName}")
+    public ResponseEntity<Resource> getEventImage(@PathVariable String fileName) {
+        try {
+            Path filePath = Paths.get(uploadDir + "/events/" + fileName);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }

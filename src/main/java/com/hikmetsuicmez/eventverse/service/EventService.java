@@ -3,6 +3,13 @@ package com.hikmetsuicmez.eventverse.service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +33,10 @@ import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
 import com.hikmetsuicmez.eventverse.mapper.EventLocationMapper;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +48,10 @@ public class EventService {
     private final UserService userService;
     private final NotificationService notificationService;
     private final EventLocationMapper eventLocationMapper;
+    private final Cloudinary cloudinary;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     @Transactional
     public EventResponse createEvent(EventRequest request) {
@@ -160,6 +175,25 @@ public class EventService {
         return events.stream()
                 .map(eventMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public String uploadEventImage(UUID eventId, MultipartFile image) throws IOException {
+        Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new ResourceNotFoundException("Etkinlik bulunamadı"));
+
+        // Cloudinary'ye yükle
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(image.getBytes(), 
+            ObjectUtils.asMap("folder", "events"));
+
+        // Cloudinary URL'ini al
+        String imageUrl = uploadResult.get("secure_url").toString();
+        
+        // Event'i güncelle
+        event.setImageUrl(imageUrl);
+        eventRepository.save(event);
+
+        return imageUrl;
     }
 
 }

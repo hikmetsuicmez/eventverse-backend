@@ -35,85 +35,24 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
         CriteriaQuery<Event> cq = cb.createQuery(Event.class);
         Root<Event> event = cq.from(Event.class);
 
-        List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> predicates = buildPredicates(cb, event, searchText, startDate, endDate, categories,
+                location, minPrice, maxPrice, minAge, maxAge, isPaid, hasAgeLimit);
 
-        // Search text için title ve description'da arama
-        if (searchText != null && !searchText.trim().isEmpty()) {
-            String searchPattern = "%" + searchText.toLowerCase().trim() + "%";
-            predicates.add(cb.or(
-                cb.like(cb.lower(event.get("title")), searchPattern),
-                cb.like(cb.lower(event.get("description")), searchPattern)
-            ));
-        }
-
-        // Tarih filtreleri
-        if (startDate != null) {
-            predicates.add(cb.greaterThanOrEqualTo(event.get("date"), startDate));
-        }
-        if (endDate != null) {
-            predicates.add(cb.lessThanOrEqualTo(event.get("date"), endDate));
-        }
-
-        // Kategoriler
-        if (categories != null && !categories.isEmpty()) {
-            predicates.add(event.get("category").in(categories));
-        }
-
-        // Lokasyon filtresi
-        if (location != null && !location.trim().isEmpty()) {
-            predicates.add(cb.equal(cb.lower(event.get("location")), location.toLowerCase().trim()));
-        }
-
-        // Fiyat aralığı
-        if (minPrice != null) {
-            predicates.add(cb.greaterThanOrEqualTo(event.get("price"), minPrice));
-        }
-        if (maxPrice != null) {
-            predicates.add(cb.lessThanOrEqualTo(event.get("price"), maxPrice));
-        }
-
-        // Yaş sınırı
-        if (minAge != null) {
-            predicates.add(cb.greaterThanOrEqualTo(event.get("ageLimit"), minAge));
-        }
-        if (maxAge != null) {
-            predicates.add(cb.lessThanOrEqualTo(event.get("ageLimit"), maxAge));
-        }
-
-        // Boolean filtreler
-        if (isPaid != null) {
-            predicates.add(cb.equal(event.get("isPaid"), isPaid));
-        }
-        if (hasAgeLimit != null) {
-            predicates.add(cb.equal(event.get("hasAgeLimit"), hasAgeLimit));
-        }
-
-        // Filtreleri uygula
         if (!predicates.isEmpty()) {
-            cq.where(predicates.toArray(new Predicate[0]));
+            cq.where(cb.and(predicates.toArray(new Predicate[0])));
         }
 
         // Sıralama
         if (pageable.getSort().isSorted()) {
             List<Order> orders = new ArrayList<>();
             pageable.getSort().forEach(sort -> {
-                if (sort.getProperty().equals("date")) {
+                String property = sort.getProperty();
+                if (property.equals("date") || property.equals("title") || 
+                    property.equals("price") || property.equals("maxParticipants")) {
                     if (sort.isAscending()) {
-                        orders.add(cb.asc(event.get("date")));
+                        orders.add(cb.asc(event.get(property)));
                     } else {
-                        orders.add(cb.desc(event.get("date")));
-                    }
-                } else if (sort.getProperty().equals("title")) {
-                    if (sort.isAscending()) {
-                        orders.add(cb.asc(event.get("title")));
-                    } else {
-                        orders.add(cb.desc(event.get("title")));
-                    }
-                } else if (sort.getProperty().equals("price")) {
-                    if (sort.isAscending()) {
-                        orders.add(cb.asc(event.get("price")));
-                    } else {
-                        orders.add(cb.desc(event.get("price")));
+                        orders.add(cb.desc(event.get(property)));
                     }
                 }
             });
@@ -122,21 +61,85 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
             }
         }
 
-        // Toplam kayıt sayısını al
+        TypedQuery<Event> query = entityManager.createQuery(cq);
+        query.setFirstResult((int) pageable.getOffset());
+        query.setMaxResults(pageable.getPageSize());
+
+        // Toplam kayıt sayısını hesapla
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Event> countRoot = countQuery.from(Event.class);
         countQuery.select(cb.count(countRoot));
-        if (!predicates.isEmpty()) {
-            countQuery.where(predicates.toArray(new Predicate[0]));
+
+        List<Predicate> countPredicates = buildPredicates(cb, countRoot, searchText, startDate, endDate, categories,
+                location, minPrice, maxPrice, minAge, maxAge, isPaid, hasAgeLimit);
+
+        if (!countPredicates.isEmpty()) {
+            countQuery.where(cb.and(countPredicates.toArray(new Predicate[0])));
         }
-        Long totalRecords = entityManager.createQuery(countQuery).getSingleResult();
 
-        // Sayfalama uygula
-        TypedQuery<Event> typedQuery = entityManager.createQuery(cq);
-        typedQuery.setFirstResult((int) pageable.getOffset());
-        typedQuery.setMaxResults(pageable.getPageSize());
+        Long total = entityManager.createQuery(countQuery).getSingleResult();
 
-        List<Event> results = typedQuery.getResultList();
-        return new PageImpl<>(results, pageable, totalRecords);
+        return new PageImpl<>(query.getResultList(), pageable, total);
+    }
+
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Event> root,
+            String searchText, LocalDate startDate, LocalDate endDate, List<String> categories,
+            String location, Double minPrice, Double maxPrice, Integer minAge, Integer maxAge,
+            Boolean isPaid, Boolean hasAgeLimit) {
+        
+        List<Predicate> predicates = new ArrayList<>();
+
+        // Metin araması
+        if (searchText != null && !searchText.trim().isEmpty()) {
+            String pattern = "%" + searchText.toLowerCase().trim() + "%";
+            predicates.add(cb.or(
+                cb.like(cb.lower(root.get("title")), pattern),
+                cb.like(cb.lower(root.get("description")), pattern)
+            ));
+        }
+
+        // Tarih filtreleri
+        if (startDate != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
+        }
+        if (endDate != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("date"), endDate));
+        }
+
+        // Kategoriler
+        if (categories != null && !categories.isEmpty()) {
+            predicates.add(root.get("category").in(categories));
+        }
+
+        // Lokasyon
+        if (location != null && !location.trim().isEmpty()) {
+            predicates.add(cb.equal(cb.lower(root.get("location")), location.toLowerCase().trim()));
+        }
+
+        // Fiyat aralığı
+        if (minPrice != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+        }
+        if (maxPrice != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+        }
+
+        // Yaş sınırı
+        if (minAge != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("ageLimit"), minAge));
+        }
+        if (maxAge != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("ageLimit"), maxAge));
+        }
+
+        // Boolean filtreler
+        if (isPaid != null) {
+            predicates.add(cb.equal(root.get("isPaid"), isPaid));
+        }
+        if (hasAgeLimit != null) {
+            predicates.add(cb.equal(root.get("hasAgeLimit"), hasAgeLimit));
+        }
+
+        return predicates;
     }
 }

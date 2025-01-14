@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import com.hikmetsuicmez.eventverse.entity.Event;
+import com.hikmetsuicmez.eventverse.entity.User;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +25,10 @@ public class EventFilterResponse {
     private Integer ageLimit;
     private Boolean isPaid;
     private Boolean hasAgeLimit;
+    private String imageUrl;
+    private Integer maxParticipants;
+    private Integer currentParticipants;
+    private UserResponse organizer;
 
     public EventFilterResponse(Event event) {
         this.id = event.getId();
@@ -36,5 +41,22 @@ public class EventFilterResponse {
         this.ageLimit = event.getAgeLimit();
         this.isPaid = event.isPaid();
         this.hasAgeLimit = event.isHasAgeLimit();
+        this.imageUrl = event.getImageUrl();
+        this.maxParticipants = event.getMaxParticipants();
+        this.currentParticipants = event.getParticipants() != null ? event.getParticipants().size() : 0;
+        
+        User organizer = event.getOrganizer();
+        if (organizer != null) {
+            this.organizer = new UserResponse(
+                organizer.getId(),
+                organizer.getFirstName(),
+                organizer.getLastName(),
+                organizer.getEmail(),
+                organizer.getPhoneNumber(),
+                organizer.getAddress(),
+                organizer.getProfilePicture(),
+                organizer.getBirthDate()
+            );
+        }
     }
 }
