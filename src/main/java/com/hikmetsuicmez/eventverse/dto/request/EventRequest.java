@@ -26,7 +26,6 @@ public class EventRequest {
     @NotBlank(message = "Konum boş olamaz")
     private String location;
 
-    @NotBlank(message = "Adres detayı boş olamaz")
     private String address;
 
     @NotNull(message = "Konum bilgisi eksik")

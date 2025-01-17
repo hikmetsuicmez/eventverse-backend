@@ -1,6 +1,7 @@
 package com.hikmetsuicmez.eventverse.mapper;
 
 import com.hikmetsuicmez.eventverse.dto.request.EventRequest;
+import com.hikmetsuicmez.eventverse.dto.response.EventFilterResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
 import com.hikmetsuicmez.eventverse.dto.response.OrganizerResponse;
 import com.hikmetsuicmez.eventverse.dto.response.ParticipantResponse;
@@ -62,6 +63,16 @@ public interface EventMapper {
                 .profilePicture(user.getProfilePicture())
                 .build();
     }
+
+    @Named("toEventFilterResponse")
+    default EventFilterResponse toEventFilterResponse(Event event) {
+        return EventFilterResponse.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .build();
+    }
+
 
     @Named("toParticipantResponseList")
     default List<ParticipantResponse> toParticipantResponseList(List<Participant> participants) {

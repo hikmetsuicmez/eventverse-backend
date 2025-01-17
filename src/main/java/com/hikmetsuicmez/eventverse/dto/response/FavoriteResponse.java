@@ -22,4 +22,5 @@ public class FavoriteResponse {
     private String eventTitle;
     private String eventDescription;
     private LocalDate eventDate;
+    private String eventImageUrl;
 }

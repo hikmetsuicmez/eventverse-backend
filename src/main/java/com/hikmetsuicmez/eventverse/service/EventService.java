@@ -28,6 +28,7 @@ import com.hikmetsuicmez.eventverse.repository.UserRepository;
 
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
+import com.hikmetsuicmez.eventverse.exception.UnauthorizedAccessException;
 import com.hikmetsuicmez.eventverse.dto.response.EventFilterResponse;
 import com.hikmetsuicmez.eventverse.dto.response.EventLocationResponse;
 import com.hikmetsuicmez.eventverse.mapper.EventLocationMapper;
@@ -52,6 +53,10 @@ public class EventService {
 
     @Value("${file.upload-dir}")
     private String uploadDir;
+
+    private User getCurrentUser() {
+        return userService.getCurrentUser();
+    }
 
     @Transactional
     public EventResponse createEvent(EventRequest request) {
@@ -194,6 +199,37 @@ public class EventService {
         eventRepository.save(event);
 
         return imageUrl;
+    }
+
+    @Transactional
+    public EventResponse updateEvent(UUID eventId, EventRequest request) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        // Check if the current user is the organizer
+        if (!event.getOrganizer().getId().equals(getCurrentUser().getId())) {
+            throw new UnauthorizedAccessException("You are not authorized to update this event");
+        }
+
+        event.setTitle(request.getTitle());
+        event.setDescription(request.getDescription());
+        event.setDate(request.getDate());
+        event.setEventTime(request.getEventTime());
+        event.setLocation(request.getLocation());
+        event.setMaxParticipants(request.getMaxParticipants());
+        event.setCategory(request.getCategory());
+        event.setPaid(request.isPaid());
+        event.setPrice(request.getPrice());
+        event.setHasAgeLimit(request.isHasAgeLimit());
+        event.setAgeLimit(request.getAgeLimit());
+        
+        // Update image if provided
+        if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
+            event.setImageUrl(request.getImageUrl());
+        }
+
+        Event updatedEvent = eventRepository.save(event);
+        return eventMapper.toResponse(updatedEvent);
     }
 
 }

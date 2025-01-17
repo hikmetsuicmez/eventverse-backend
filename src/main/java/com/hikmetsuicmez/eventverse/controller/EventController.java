@@ -42,6 +42,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/v1/events")
@@ -188,6 +189,14 @@ public class EventController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @PutMapping("/{eventId}")
+    @PreAuthorize("hasRole('USER')")
+    public ApiResponse<EventResponse> updateEvent(
+            @PathVariable UUID eventId,
+            @RequestBody @Valid EventRequest request) {
+        return ApiResponse.success(eventService.updateEvent(eventId, request), "Etkinlik başarıyla güncellendi");
     }
 
 }

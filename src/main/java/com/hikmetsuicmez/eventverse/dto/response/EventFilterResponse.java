@@ -7,12 +7,14 @@ import com.hikmetsuicmez.eventverse.entity.Event;
 import com.hikmetsuicmez.eventverse.entity.User;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class EventFilterResponse {
 
     private UUID id;
