@@ -75,6 +75,7 @@ public class ParticipantService {
                 notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
             } else if (event.isPaid()) {
                 // Organizatör onayı gerekmiyorsa ve ücretliyse, direkt ödeme sürecini başlat
+                notificationService.createPaymentTimeStartedNotification(savedParticipant);
                 eventPublisher.publishEvent(new PaymentRequiredEvent(event.getId(), currentUser.getId()));
             }
         } catch (Exception e) {
@@ -99,6 +100,7 @@ public class ParticipantService {
         // Eğer etkinlik ücretliyse ve katılımcı onaylanıyorsa, ödeme durumuna geç
         if (status == ParticipantStatus.APPROVED && event.isPaid()) {
             status = ParticipantStatus.PAYMENT_PENDING;
+            notificationService.createPaymentTimeStartedNotification(participant);
             eventPublisher.publishEvent(new PaymentRequiredEvent(event.getId(), participant.getUser().getId()));
         }
 

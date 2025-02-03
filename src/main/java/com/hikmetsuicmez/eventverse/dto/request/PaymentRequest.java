@@ -30,5 +30,8 @@ public class PaymentRequest {
     @NotNull(message = "Tutar boş olamaz")
     private Double price;
 
+    @NotBlank(message = "Adres bilgisi zorunludur")
+    private String address;
+
     private String installment = "1";
 } 

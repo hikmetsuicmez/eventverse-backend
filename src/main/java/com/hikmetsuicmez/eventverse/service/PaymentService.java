@@ -18,12 +18,16 @@ import com.iyzipay.model.*;
 import com.iyzipay.request.CreatePaymentRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,6 +40,37 @@ public class PaymentService {
     private final NotificationService notificationService;
     private final UserService userService;
     private final Options options;
+    private final ZoneId TURKEY_ZONE = ZoneId.of("Europe/Istanbul");
+
+    @Scheduled(fixedRate = 300000) // 5 dakikada bir çalışır
+    public void checkExpiredPayments() {
+        LocalDateTime now = LocalDateTime.now(TURKEY_ZONE);
+        List<Payment> pendingPayments = paymentRepository.findByStatus(PaymentStatus.PENDING);
+        
+        for (Payment payment : pendingPayments) {
+            if (payment.getExpirationDate() != null && now.isAfter(payment.getExpirationDate())) {
+                // Ödeme süresini geçmiş ödemeleri iptal et
+                payment.setStatus(PaymentStatus.EXPIRED);
+                paymentRepository.save(payment);
+                
+                // Katılımcı durumunu güncelle
+                processPayment(payment.getEvent().getId(), payment.getUser().getId(), PaymentStatus.EXPIRED);
+                
+                // Bildirim gönder
+                Participant participant = participantRepository.findByEventIdAndUserId(
+                    payment.getEvent().getId(), 
+                    payment.getUser().getId()
+                ).orElse(null);
+                
+                if (participant != null) {
+                    notificationService.createPaymentStatusNotification(
+                        participant, 
+                        "Ödeme süresi dolduğu için katılımınız iptal edildi"
+                    );
+                }
+            }
+        }
+    }
 
     @Transactional
     public String processIyzicoPayment(UUID eventId, PaymentRequest request) {
@@ -45,6 +80,12 @@ public class PaymentService {
 
         Participant participant = participantRepository.findByEventIdAndUserId(eventId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
+
+        // Katılımcının daha önce başarısız ödemesi varsa kontrol et
+        Optional<Payment> lastPayment = paymentRepository.findFirstByEventIdAndUserIdOrderByPaymentDateDesc(eventId, currentUser.getId());
+        if (lastPayment.isPresent() && lastPayment.get().getStatus() == PaymentStatus.FAILED) {
+            throw new PaymentException("Bu etkinlik için daha önce başarısız bir ödeme işlemi gerçekleşti. Tekrar katılım sağlayamazsınız.");
+        }
 
         if (participant.getStatus() != ParticipantStatus.PAYMENT_PENDING) {
             throw new PaymentException("Invalid payment status");
@@ -76,9 +117,9 @@ public class PaymentService {
         buyer.setSurname(currentUser.getLastName());
         buyer.setEmail(currentUser.getEmail());
         buyer.setIdentityNumber("74300864791");
-        buyer.setRegistrationAddress("Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1");
+        buyer.setRegistrationAddress(request.getAddress());
         buyer.setIp("85.34.78.112");
-        buyer.setCity("Istanbul");
+        buyer.setCity(event.getCity());
         buyer.setCountry("Turkey");
         paymentRequest.setBuyer(buyer);
 
@@ -87,7 +128,7 @@ public class PaymentService {
         billingAddress.setContactName(buyer.getName() + " " + buyer.getSurname());
         billingAddress.setCity(buyer.getCity());
         billingAddress.setCountry(buyer.getCountry());
-        billingAddress.setAddress(buyer.getRegistrationAddress());
+        billingAddress.setAddress(request.getAddress());
         paymentRequest.setBillingAddress(billingAddress);
 
         // Teslimat adresi (sanal ürün olduğu için fatura adresi ile aynı)
@@ -95,13 +136,13 @@ public class PaymentService {
         shippingAddress.setContactName(buyer.getName() + " " + buyer.getSurname());
         shippingAddress.setCity(buyer.getCity());
         shippingAddress.setCountry(buyer.getCountry());
-        shippingAddress.setAddress(buyer.getRegistrationAddress());
+        shippingAddress.setAddress(request.getAddress());
         paymentRequest.setShippingAddress(shippingAddress);
 
         BasketItem item = new BasketItem();
         item.setId(event.getId().toString());
         item.setName(event.getTitle());
-        item.setCategory1("Etkinlik");
+        item.setCategory1(event.getCategory());
         item.setItemType(BasketItemType.VIRTUAL.name());
         item.setPrice(BigDecimal.valueOf(event.getPrice()));
 
@@ -118,7 +159,9 @@ public class PaymentService {
                     .user(currentUser)
                     .amount(event.getPrice())
                     .installmentCount(Integer.parseInt(request.getInstallment()))
-                    .paymentDate(LocalDateTime.now())
+                    .paymentDate(LocalDateTime.now(TURKEY_ZONE))
+                    .expirationDate(LocalDateTime.now(TURKEY_ZONE).plusHours(24)) // 24 saat süre
+                    .status(PaymentStatus.PENDING)
                     .build();
 
             if (iyzipayResponse.getStatus().equals("success")) {

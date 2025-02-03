@@ -39,6 +39,8 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import java.util.Map;
 import org.springframework.scheduling.annotation.Scheduled;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -60,16 +62,22 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse createEvent(EventRequest request) {
+    public EventResponse createEvent(EventRequest eventRequest) {
         User currentUser = userService.getCurrentUser();
 
-        Event event = eventMapper.toEntity(request);
+        Event event = eventMapper.toEntity(eventRequest);
         event.setOrganizer(currentUser);
+        event.setRequiresApproval(eventRequest.isRequiresApproval());
+        
+        // Timezone ayarlaması
+        ZoneId turkeyZone = ZoneId.of("Europe/Istanbul");
+        LocalDate localDate = event.getDate();
+        if (localDate != null) {
+            ZonedDateTime zonedDateTime = localDate.atStartOfDay(turkeyZone);
+            event.setDate(zonedDateTime.toLocalDate());
+        }
 
         Event savedEvent = eventRepository.save(event);
-
-        notificationService.createEventCreationNotification(savedEvent);
-
         return eventMapper.toResponse(savedEvent);
     }
 

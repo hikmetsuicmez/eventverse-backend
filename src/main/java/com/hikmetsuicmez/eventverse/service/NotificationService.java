@@ -286,7 +286,8 @@ public class NotificationService {
 
         try {
             String message = "'" + participant.getEvent().getTitle() + 
-                    "' etkinliği için ödeme yapmanız gerekiyor. Lütfen ödemenizi tamamlayın.";
+                    "' etkinliği için ödeme yapmanız gerekiyor. Ödeme için 24 saat süreniz bulunmaktadır. " +
+                    "Bu süre içinde ödeme yapmazsanız katılımınız otomatik olarak iptal edilecektir.";
 
             Notification notification = Notification.builder()
                 .recipient(participant.getUser())
@@ -299,6 +300,32 @@ public class NotificationService {
             notificationRepository.save(notification);
         } catch (Exception e) {
             System.err.println("Ödeme hatırlatma bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
+    // Ödeme süresi başlangıç bildirimi
+    public void createPaymentTimeStartedNotification(Participant participant) {
+        if (participant == null || participant.getUser() == null || 
+            participant.getEvent() == null) {
+            return;
+        }
+
+        try {
+            String message = "'" + participant.getEvent().getTitle() + 
+                    "' etkinliğine katılımınız onaylandı. Ödeme için 24 saat süreniz başlamıştır. " +
+                    "Lütfen bu süre içinde ödemenizi tamamlayın, aksi halde katılımınız otomatik olarak iptal edilecektir.";
+
+            Notification notification = Notification.builder()
+                .recipient(participant.getUser())
+                .event(participant.getEvent())
+                .message(message)
+                .status(NotificationStatus.UNREAD)
+                .timestamp(LocalDateTime.now())
+                .build();
+            
+            notificationRepository.save(notification);
+        } catch (Exception e) {
+            System.err.println("Ödeme süresi başlangıç bildirimi oluşturulurken hata: " + e.getMessage());
         }
     }
 
