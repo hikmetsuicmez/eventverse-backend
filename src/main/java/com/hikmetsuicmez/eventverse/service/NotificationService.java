@@ -3,10 +3,12 @@ package com.hikmetsuicmez.eventverse.service;
 import com.hikmetsuicmez.eventverse.dto.response.NotificationResponse;
 import com.hikmetsuicmez.eventverse.entity.*;
 import com.hikmetsuicmez.eventverse.enums.NotificationStatus;
+import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 import com.hikmetsuicmez.eventverse.exception.ResourceNotFoundException;
 import com.hikmetsuicmez.eventverse.exception.UnauthorizedAccessException;
 import com.hikmetsuicmez.eventverse.mapper.NotificationMapper;
 import com.hikmetsuicmez.eventverse.repository.NotificationRepository;
+import com.hikmetsuicmez.eventverse.repository.ParticipantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserService userService;
     private final NotificationMapper notificationMapper;
+    private final ParticipantRepository participantRepository;
 
     public List<NotificationResponse> getUserNotifications() {
         List<Notification> notifications = notificationRepository
@@ -87,8 +90,26 @@ public class NotificationService {
         }
 
         try {
-            String statusMessage = participant.getStatus().toString().equals("APPROVED") ? 
-                "kabul edildi" : "reddedildi";
+            String statusMessage;
+            switch (participant.getStatus()) {
+                case APPROVED:
+                    statusMessage = "kabul edildi";
+                    break;
+                case REJECTED:
+                    statusMessage = "reddedildi";
+                    break;
+                case PAYMENT_PENDING:
+                    statusMessage = "kabul edildi ve ödeme bekleniyor";
+                    break;
+                case PAYMENT_FAILED:
+                    statusMessage = "ödeme başarısız oldu";
+                    break;
+                case CANCELLED:
+                    statusMessage = "iptal edildi";
+                    break;
+                default:
+                    return;
+            }
 
             Notification notification = Notification.builder()
                 .recipient(participant.getUser())
@@ -231,6 +252,56 @@ public class NotificationService {
         }
     }
 
+    // Ödeme durumu bildirimi
+    public void createPaymentStatusNotification(Participant participant, String paymentStatus) {
+        if (participant == null || participant.getUser() == null || 
+            participant.getEvent() == null) {
+            return;
+        }
+
+        try {
+            String message = "'" + participant.getEvent().getTitle() + 
+                    "' etkinliği için ödeme durumu: " + paymentStatus;
+
+            Notification notification = Notification.builder()
+                .recipient(participant.getUser())
+                .event(participant.getEvent())
+                .message(message)
+                .status(NotificationStatus.UNREAD)
+                .timestamp(LocalDateTime.now())
+                .build();
+            
+            notificationRepository.save(notification);
+        } catch (Exception e) {
+            System.err.println("Ödeme durumu bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
+    // Ödeme hatırlatma bildirimi
+    public void createPaymentReminderNotification(Participant participant) {
+        if (participant == null || participant.getUser() == null || 
+            participant.getEvent() == null) {
+            return;
+        }
+
+        try {
+            String message = "'" + participant.getEvent().getTitle() + 
+                    "' etkinliği için ödeme yapmanız gerekiyor. Lütfen ödemenizi tamamlayın.";
+
+            Notification notification = Notification.builder()
+                .recipient(participant.getUser())
+                .event(participant.getEvent())
+                .message(message)
+                .status(NotificationStatus.UNREAD)
+                .timestamp(LocalDateTime.now())
+                .build();
+            
+            notificationRepository.save(notification);
+        } catch (Exception e) {
+            System.err.println("Ödeme hatırlatma bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
     // Bildirimi okundu olarak işaretle
     public NotificationResponse markAsRead(UUID notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
@@ -268,5 +339,88 @@ public class NotificationService {
         notificationRepository.saveAll(notifications);
     }
 
-    
+    // Etkinlik güncelleme bildirimi
+    public void createEventUpdateNotification(Event event) {
+        if (event == null) {
+            return;
+        }
+
+        try {
+            // Etkinliğin tüm katılımcılarına bildirim gönder
+            List<Participant> participants = participantRepository.findByEventId(event.getId());
+            
+            for (Participant participant : participants) {
+                Notification notification = Notification.builder()
+                    .recipient(participant.getUser())
+                    .event(event)
+                    .message("'" + event.getTitle() + "' etkinliğinde güncelleme yapıldı. " +
+                            "Lütfen etkinlik detaylarını kontrol edin.")
+                    .status(NotificationStatus.UNREAD)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+                
+                notificationRepository.save(notification);
+            }
+        } catch (Exception e) {
+            System.err.println("Etkinlik güncelleme bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
+    // Etkinlik iptal bildirimi
+    public void createEventCancellationNotification(Event event) {
+        if (event == null) {
+            return;
+        }
+
+        try {
+            // Etkinliğin tüm katılımcılarına bildirim gönder
+            List<Participant> participants = participantRepository.findByEventId(event.getId());
+            
+            for (Participant participant : participants) {
+                Notification notification = Notification.builder()
+                    .recipient(participant.getUser())
+                    .event(event)
+                    .message("'" + event.getTitle() + "' etkinliği iptal edildi.")
+                    .status(NotificationStatus.UNREAD)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+                
+                notificationRepository.save(notification);
+            }
+        } catch (Exception e) {
+            System.err.println("Etkinlik iptal bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
+    // Etkinlik yaklaşıyor bildirimi
+    public void createEventReminderNotification(Event event) {
+        if (event == null) {
+            return;
+        }
+
+        try {
+            // Onaylanmış katılımcılara hatırlatma gönder
+            List<Participant> approvedParticipants = participantRepository.findByEventIdAndStatus(
+                event.getId(), 
+                ParticipantStatus.APPROVED
+            );
+            
+            for (Participant participant : approvedParticipants) {
+                Notification notification = Notification.builder()
+                    .recipient(participant.getUser())
+                    .event(event)
+                    .message("Hatırlatma: '" + event.getTitle() + "' etkinliği " + 
+                            event.getDate().toString() + " tarihinde " + 
+                            event.getEventTime() + " saatinde başlayacak.")
+                    .status(NotificationStatus.UNREAD)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+                
+                notificationRepository.save(notification);
+            }
+        } catch (Exception e) {
+            System.err.println("Etkinlik hatırlatma bildirimi oluşturulurken hata: " + e.getMessage());
+        }
+    }
+
 } 

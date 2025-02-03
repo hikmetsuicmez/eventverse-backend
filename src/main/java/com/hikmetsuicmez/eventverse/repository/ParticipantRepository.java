@@ -3,6 +3,7 @@ package com.hikmetsuicmez.eventverse.repository;
 import com.hikmetsuicmez.eventverse.entity.Event;
 import com.hikmetsuicmez.eventverse.entity.Participant;
 import com.hikmetsuicmez.eventverse.entity.User;
+import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -22,4 +23,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     List<Participant> findByEventId(UUID id);
     Optional<Participant> findByEventIdAndId(UUID eventId, UUID participantId);
     boolean existsByEventAndUser(Event event, User user);
+    Optional<Participant> findByEventIdAndUserId(UUID eventId, UUID userId);
+    List<Participant> findByEventIdAndStatus(UUID eventId, ParticipantStatus status);
 } 
