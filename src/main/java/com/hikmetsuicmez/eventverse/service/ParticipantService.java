@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.hikmetsuicmez.eventverse.dto.response.EventResponse;
@@ -12,6 +13,8 @@ import com.hikmetsuicmez.eventverse.entity.Event;
 import com.hikmetsuicmez.eventverse.entity.Participant;
 import com.hikmetsuicmez.eventverse.entity.User;
 import com.hikmetsuicmez.eventverse.enums.ParticipantStatus;
+import com.hikmetsuicmez.eventverse.event.PaymentRequiredEvent;
+import com.hikmetsuicmez.eventverse.event.ParticipantStatusUpdateEvent;
 import com.hikmetsuicmez.eventverse.exception.*;
 import com.hikmetsuicmez.eventverse.repository.EventRepository;
 import com.hikmetsuicmez.eventverse.repository.ParticipantRepository;
@@ -21,6 +24,7 @@ import com.hikmetsuicmez.eventverse.mapper.EventMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 
 @Service
 @RequiredArgsConstructor
@@ -33,61 +37,112 @@ public class ParticipantService {
     private final EventMapper eventMapper;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ParticipantResponse addParticipant(UUID eventId) {
-        // 1. Etkinliği bul
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
-        // 2. Mevcut kullanıcıyı al
         User currentUser = userService.getCurrentUser();
 
-        // 3. Organizatör kontrolü
-        if (event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new OrganizerJoinException("Event organizer cannot join their own event");
+        // Temel kontroller
+        validateParticipation(event, currentUser);
+
+        // Katılımcı durumunu belirle
+        ParticipantStatus initialStatus;
+        if (event.getRequiresApproval()) {
+            initialStatus = ParticipantStatus.PENDING; // Organizatör onayı bekleniyor
+        } else if (event.isPaid()) {
+            initialStatus = ParticipantStatus.PAYMENT_PENDING; // Direkt ödeme bekleniyor
+        } else {
+            initialStatus = ParticipantStatus.APPROVED; // Ücretsiz ve onaysız etkinlik
         }
 
-        // 4. Etkinlik tarihini kontrol et
-        if (event.getDate().atStartOfDay().isBefore(LocalDateTime.now())) {
-            throw new EventExpiredException("Event has already expired");
-        }
-
-        // 5. Kullanıcının zaten katılıp katılmadığını kontrol et
-        if (participantRepository.existsByEventIdAndUserId(eventId, currentUser.getId())) {
-            throw new AlreadyParticipatingException("You are already participating in this event");
-        }
-
-        // 6. Etkinlik kapasitesini kontrol et
-        long currentParticipants = participantRepository.countByEventId(eventId);
-        if (currentParticipants >= event.getMaxParticipants()) {
-            throw new EventCapacityFullException("Event has reached its maximum capacity");
-        }
-
-        // 7. Yeni katılımcı oluştur
         Participant participant = Participant.builder()
                 .event(event)
                 .user(currentUser)
-                .status(ParticipantStatus.PENDING)
+                .status(initialStatus)
                 .registrationDate(LocalDateTime.now())
                 .build();
 
-        // 8. Katılımcıyı kaydet
         Participant savedParticipant = participantRepository.save(participant);
 
         try {
-            // 9. Etkinlik sahibine bildirim gönder
-            notificationService.createParticipationRequestNotification(savedParticipant);
-
-            // 10. Katılımcıya bildirim gönder
-            notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
+            if (event.getRequiresApproval()) {
+                // Organizatör onayı gerekiyorsa, onay bildirimleri gönder
+                notificationService.createParticipationRequestNotification(savedParticipant);
+                notificationService.createParticipationRequestConfirmationNotification(savedParticipant);
+            } else if (event.isPaid()) {
+                // Organizatör onayı gerekmiyorsa ve ücretliyse, direkt ödeme sürecini başlat
+                eventPublisher.publishEvent(new PaymentRequiredEvent(event.getId(), currentUser.getId()));
+            }
         } catch (Exception e) {
-            // Bildirim gönderme hatası olsa bile katılım işlemi başarılı sayılır
             System.err.println("Bildirim gönderilirken hata oluştu: " + e.getMessage());
         }
 
-        // 11. Response'u dön
         return participantMapper.toResponse(savedParticipant);
+    }
+
+    @Transactional
+    public ParticipantResponse updateParticipantStatus(UUID eventId, UUID participantId, ParticipantStatus status) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
+
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found with id: " + participantId));
+
+        if (!participant.getEvent().getId().equals(event.getId())) {
+            throw new ResourceNotFoundException("Participant not found for this event");
+        }
+
+        // Eğer etkinlik ücretliyse ve katılımcı onaylanıyorsa, ödeme durumuna geç
+        if (status == ParticipantStatus.APPROVED && event.isPaid()) {
+            status = ParticipantStatus.PAYMENT_PENDING;
+            eventPublisher.publishEvent(new PaymentRequiredEvent(event.getId(), participant.getUser().getId()));
+        }
+
+        participant.setStatus(status);
+        Participant updatedParticipant = participantRepository.save(participant);
+
+        // Katılımcıya bildirim gönder
+        notificationService.createParticipationStatusNotification(updatedParticipant);
+
+        return participantMapper.toResponse(updatedParticipant);
+    }
+
+    private void validateParticipation(Event event, User user) {
+        if (event.getOrganizer().getId().equals(user.getId())) {
+            throw new OrganizerJoinException("Event organizer cannot join their own event");
+        }
+
+        // Tarih ve saat kontrolü
+        LocalDateTime eventDateTime = event.getDate().atTime(
+            Integer.parseInt(event.getEventTime().split(":")[0]),
+            Integer.parseInt(event.getEventTime().split(":")[1])
+        );
+        
+        if (eventDateTime.isBefore(LocalDateTime.now())) {
+            throw new EventExpiredException("Etkinlik tarihi geçmiş");
+        }
+
+        if (participantRepository.existsByEventIdAndUserId(event.getId(), user.getId())) {
+            throw new AlreadyParticipatingException("You are already participating in this event");
+        }
+
+        long currentParticipants = participantRepository.countByEventId(event.getId());
+        if (currentParticipants >= event.getMaxParticipants()) {
+            throw new EventCapacityFullException("Event has reached its maximum capacity");
+        }
+    }
+
+    @EventListener
+    public void handleParticipantStatusUpdateEvent(ParticipantStatusUpdateEvent event) {
+        Participant participant = participantRepository.findByEventIdAndUserId(event.getEventId(), event.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
+        
+        participant.setStatus(event.getStatus());
+        participantRepository.save(participant);
     }
 
     public List<ParticipantResponse> getParticipants(UUID eventId) {
@@ -95,61 +150,9 @@ public class ParticipantService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
         List<Participant> participants = participantRepository.findByEventId(event.getId());
-        return participants
-                .stream()
+        return participants.stream()
                 .map(participantMapper::toResponse)
                 .toList();
-    }
-
-    @Transactional
-    public ParticipantResponse updateParticipantStatus(UUID eventId, UUID participantId, ParticipantStatus status) {
-        // Status null kontrolü
-        if (status == null) {
-            throw new IllegalArgumentException("Status cannot be null");
-        }
-
-        // Etkinliği bul
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
-
-        // Katılımcıyı bul
-        Participant participant = participantRepository.findById(participantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Participant not found with id: " + participantId));
-
-        // Event ID'sinin eşleşip eşleşmediğini kontrol et
-        if (!participant.getEvent().getId().equals(event.getId())) {
-            throw new ResourceNotFoundException("Participant not found for this event");
-        }
-
-        // İsteği yapan kullanıcının etkinliğin organizatörü olup olmadığını kontrol et
-        UUID currentUserId = userService.getCurrentUserId();
-        if (!event.getOrganizer().getId().equals(currentUserId)) {
-            throw new UnauthorizedAccessException("Only event organizer can update participant status");
-        }
-
-        // Mevcut durumu kontrol et
-        if (participant.getStatus() == status) {
-            return participantMapper.toResponse(participant);
-        }
-
-        // Status güncelleme
-        participant.setStatus(status);
-        if (participant.getRegistrationDate() == null) {
-            participant.setRegistrationDate(LocalDateTime.now());
-        }
-        
-        // Önce katılımcıyı kaydet
-        Participant savedParticipant = participantRepository.save(participant);
-        
-        try {
-            // Bildirim oluştur
-            notificationService.createParticipationStatusNotification(savedParticipant);
-        } catch (Exception e) {
-            // Bildirim hatası olsa bile işleme devam et
-            System.err.println("Katılımcı durumu bildirimi gönderilirken hata: " + e.getMessage());
-        }
-        
-        return participantMapper.toResponse(savedParticipant);
     }
 
     public List<EventResponse> getUserEvents() {

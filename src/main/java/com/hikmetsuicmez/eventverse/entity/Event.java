@@ -6,8 +6,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.hikmetsuicmez.eventverse.enums.PaymentStatus;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
 
@@ -26,7 +28,9 @@ public class Event {
     private String title;
     private String description;
     private LocalDate date;
+    @Column(name = "location", nullable = false)
     private String location;
+    @Column(name = "max_participants", nullable = false)
     private int maxParticipants;
     private String category;
 
@@ -59,5 +63,18 @@ public class Event {
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Participant> participants;
+
+    @Column(name = "requires_approval", nullable = false)
+    private Boolean requiresApproval = false;
+
+    @Column(name = "payment_status")
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
+    @Column(name = "payment_deadline")
+    private LocalDateTime paymentDeadline;
+
+    @Column(name = "address")
+    private String address;
 
 }

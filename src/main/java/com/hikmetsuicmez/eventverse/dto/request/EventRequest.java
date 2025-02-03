@@ -17,10 +17,11 @@ public class EventRequest {
     private String description;
 
     @NotNull(message = "Tarih boş olamaz")
-    @Future(message = "Tarih gelecekte olmalıdır")
+    @FutureOrPresent(message = "Geçmiş bir tarih seçilemez")
     private LocalDate date;
 
     @NotBlank(message = "Saat boş olamaz")
+    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$", message = "Saat formatı HH:mm şeklinde olmalıdır")
     private String eventTime;
 
     @NotBlank(message = "Konum boş olamaz")
@@ -28,7 +29,7 @@ public class EventRequest {
 
     private String address;
 
-    @NotNull(message = "Konum bilgisi eksik")
+    @NotNull(message = "Koordinat bilgisi eksik")
     private LocationRequest coordinates;
 
     @Min(value = 1, message = "Katılımcı sayısı en az 1 olmalıdır")
@@ -52,6 +53,8 @@ public class EventRequest {
     @DecimalMin(value = "0.0", message = "Ücret 0'dan küçük olamaz")
     @DecimalMax(value = "100000.0", message = "Ücret 100.000 TL'den fazla olamaz")
     private Double price;
+
+    private boolean requiresApproval;
 
     @AssertTrue(message = "Yaş sınırı varsa, yaş limiti belirtilmelidir")
     private boolean isAgeLimitValid() {

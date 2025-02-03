@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import java.util.Map;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Service
 @RequiredArgsConstructor
@@ -202,34 +203,62 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse updateEvent(UUID eventId, EventRequest request) {
+    public EventResponse updateEvent(UUID eventId, EventRequest eventRequest) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
-        // Check if the current user is the organizer
         if (!event.getOrganizer().getId().equals(getCurrentUser().getId())) {
-            throw new UnauthorizedAccessException("You are not authorized to update this event");
+            throw new UnauthorizedAccessException("You can only update your own events");
         }
 
-        event.setTitle(request.getTitle());
-        event.setDescription(request.getDescription());
-        event.setDate(request.getDate());
-        event.setEventTime(request.getEventTime());
-        event.setLocation(request.getLocation());
-        event.setMaxParticipants(request.getMaxParticipants());
-        event.setCategory(request.getCategory());
-        event.setPaid(request.isPaid());
-        event.setPrice(request.getPrice());
-        event.setHasAgeLimit(request.isHasAgeLimit());
-        event.setAgeLimit(request.getAgeLimit());
-        
-        // Update image if provided
-        if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
-            event.setImageUrl(request.getImageUrl());
-        }
+        // Etkinlik bilgilerini güncelle
+        event.setTitle(eventRequest.getTitle());
+        event.setDescription(eventRequest.getDescription());
+        event.setDate(eventRequest.getDate());
+        event.setEventTime(eventRequest.getEventTime());
+        event.setLocation(eventRequest.getLocation());
+        event.setAddress(eventRequest.getAddress());
+        event.setMaxParticipants(eventRequest.getMaxParticipants());
+        event.setCategory(eventRequest.getCategory());
+        event.setHasAgeLimit(eventRequest.isHasAgeLimit());
+        event.setAgeLimit(eventRequest.getAgeLimit());
+        event.setPaid(eventRequest.isPaid());
+        event.setPrice(eventRequest.getPrice());
+        event.setRequiresApproval(eventRequest.isRequiresApproval());
 
         Event updatedEvent = eventRepository.save(event);
+
+        // Katılımcılara bildirim gönder
+        notificationService.createEventUpdateNotification(updatedEvent);
+
         return eventMapper.toResponse(updatedEvent);
+    }
+
+    @Transactional
+    public void deleteEvent(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
+
+        if (!event.getOrganizer().getId().equals(getCurrentUser().getId())) {
+            throw new UnauthorizedAccessException("You can only delete your own events");
+        }
+
+        // Katılımcılara iptal bildirimi gönder
+        notificationService.createEventCancellationNotification(event);
+
+        // Etkinliği sil
+        eventRepository.delete(event);
+    }
+
+    // Etkinlik hatırlatma bildirimi gönder (Scheduled task)
+    @Scheduled(cron = "0 0 9 * * *") // Her gün saat 09:00'da çalışır
+    public void sendEventReminders() {
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        List<Event> tomorrowEvents = eventRepository.findByDate(tomorrow);
+        
+        for (Event event : tomorrowEvents) {
+            notificationService.createEventReminderNotification(event);
+        }
     }
 
 }
